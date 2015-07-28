@@ -12,16 +12,28 @@ var server = http.createServer(function(request, response) {
 });
 
 clients = {};
+passwords = {};
 socketio.listen(server).on("connection", function(socket) {
 	socket.on("register", function(data) {
-		var username = data;
-		if (clients.hasOwnProperty(username) == false) {
-			clients[username] = socket;
+		if (clients.hasOwnProperty(data.username) == false) {
+			clients[data.username] = socket;
+			usernames[data.username] = data.password;
 			socket.emit("register_success");
 		}  else {
 			socket.emit("register_fail");
 		}
+	});
 
+	socket.on("login", function(data) {
+		if (usernames.hasOwnProperty(data.username) == true) {
+			if (usernames[data.username] == data.password) {
+				socket.emit("login_success");
+			} else {
+				socket.emit("incorrect_password");
+			}
+		} else {
+			socket.emit("incorrect_username");
+		}
 	});
 
 	socket.on("error", function(err) {
