@@ -108,7 +108,7 @@ public class RegisterActivity extends Activity {
             return false;
         }
         if (password.length() < 6) {
-            mPasswordView.setError(getString(R.string.error_invalid_password));
+            mPasswordView.setError(getString(R.string.error_field_too_short));
             return false;
         }
         if (password.equals(passwordRepeat) == false) {

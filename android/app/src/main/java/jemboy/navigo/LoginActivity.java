@@ -4,13 +4,20 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+
+import com.github.nkzawa.emitter.Emitter;
 import com.github.nkzawa.socketio.client.IO;
 import com.github.nkzawa.socketio.client.Socket;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.net.URISyntaxException;
 
 public class LoginActivity extends Activity {
@@ -49,7 +56,50 @@ public class LoginActivity extends Activity {
     }
 
     private void attemptLogin() {
-        // On the way
+        showProgress(true);
+        mSocket.connect();
+        JSONObject jsonObject = new JSONObject();
+        try {
+            jsonObject.put("username", mUsernameView.getText().toString());
+            jsonObject.put("password", mPasswordView.getText().toString()); // Need to hash the password here!
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        mSocket.emit("login", jsonObject);
+        mSocket.on("login_success", new Emitter.Listener() {
+            @Override
+            public void call(Object... args) {
+                Intent intent = new Intent(LoginActivity.this, Blank.class);
+                startActivity(intent);
+                mSocket.disconnect();
+            }
+        });
+        mSocket.on("incorrect_username", new Emitter.Listener() {
+            @Override
+            public void call(Object... args) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        showProgress(false);
+                        mUsernameView.setError(getString(R.string.error_invalid_username));
+                    }
+                });
+                mSocket.disconnect();
+            }
+        });
+        mSocket.on("incorrect_password", new Emitter.Listener() {
+            @Override
+            public void call(Object... args) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        showProgress(false);
+                        mPasswordView.setError(getString(R.string.error_invalid_password));
+                    }
+                });
+                mSocket.disconnect();
+            }
+        });
     }
 
     @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR2)

@@ -11,8 +11,9 @@
 
     <string name="error_invalid_username">This username is invalid</string>
     <string name="error_taken_username">This username is taken</string>
-    <string name="error_invalid_password">You need at least 6 characters</string>
+    <string name="error_invalid_password">Password is incorrect</string>
     <string name="error_matching_password">Passwords do not match</string>
     <string name="error_field_required">This field is required</string>
+    <string name="error_field_too_short">You need at least 6 characters</string>
 
 </resources>
