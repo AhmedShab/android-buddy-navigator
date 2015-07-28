@@ -17,7 +17,7 @@ socketio.listen(server).on("connection", function(socket) {
 	socket.on("register", function(data) {
 		if (clients.hasOwnProperty(data.username) == false) {
 			clients[data.username] = socket;
-			usernames[data.username] = data.password;
+			passwords[data.username] = data.password;
 			socket.emit("register_success");
 		}  else {
 			socket.emit("register_fail");
@@ -25,8 +25,8 @@ socketio.listen(server).on("connection", function(socket) {
 	});
 
 	socket.on("login", function(data) {
-		if (usernames.hasOwnProperty(data.username) == true) {
-			if (usernames[data.username] == data.password) {
+		if (passwords.hasOwnProperty(data.username) == true) {
+			if (passwords[data.username] == data.password) {
 				socket.emit("login_success");
 			} else {
 				socket.emit("incorrect_password");
