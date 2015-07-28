@@ -16,6 +16,10 @@ import android.widget.TextView;
 import com.github.nkzawa.emitter.Emitter;
 import com.github.nkzawa.socketio.client.IO;
 import com.github.nkzawa.socketio.client.Socket;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.net.URISyntaxException;
 
 public class RegisterActivity extends Activity {
@@ -48,7 +52,9 @@ public class RegisterActivity extends Activity {
         mRegisterButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                attemptRegister();
+                if (inputCheck() == true) {
+                    attemptRegister();
+                }
             }
         });
         mRegisterFormView = findViewById(R.id.register_form);
@@ -58,9 +64,14 @@ public class RegisterActivity extends Activity {
     private void attemptRegister() {
         showProgress(true);
         mSocket.connect();
-        final String mUsername = mUsernameView.getText().toString();
-        mSocket.emit("register", mUsername);
-
+        JSONObject jsonObject = new JSONObject();
+        try {
+            jsonObject.put("username", mUsernameView.getText().toString());
+            jsonObject.put("password", mPasswordView.getText().toString()); // Need to hash the password here!
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        mSocket.emit("register", jsonObject);
         mSocket.on("register_success", new Emitter.Listener() {
             @Override
             public void call(Object... args) {
@@ -82,6 +93,29 @@ public class RegisterActivity extends Activity {
                 mSocket.disconnect();
             }
         });
+    }
+
+    private boolean inputCheck() {
+        String username = mUsernameView.getText().toString();
+        String password = mPasswordView.getText().toString();
+        String passwordRepeat = mPasswordRepeatView.getText().toString();
+        if (username.length() == 0) {
+            mUsernameView.setError(getString(R.string.error_field_required));
+            return false;
+        }
+        if (username.length()  < 6) {
+            mUsernameView.setError(getString(R.string.error_invalid_username));
+            return false;
+        }
+        if (password.length() < 6) {
+            mPasswordView.setError(getString(R.string.error_invalid_password));
+            return false;
+        }
+        if (password.equals(passwordRepeat) == false) {
+            mPasswordRepeatView.setError(getString(R.string.error_matching_password));
+            return false;
+        }
+        return true;
     }
 
     public void showProgress(final boolean show) {
