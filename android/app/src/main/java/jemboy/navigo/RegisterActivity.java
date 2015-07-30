@@ -12,6 +12,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.github.nkzawa.emitter.Emitter;
 import com.github.nkzawa.socketio.client.IO;
@@ -75,7 +76,8 @@ public class RegisterActivity extends Activity {
         mSocket.on("register_success", new Emitter.Listener() {
             @Override
             public void call(Object... args) {
-                Intent intent = new Intent(RegisterActivity.this, Blank.class);
+                Intent intent = new Intent(RegisterActivity.this, LaunchActivity.class);
+                // Toast.makeText(getApplicationContext(), "Registration Successful", Toast.LENGTH_SHORT).show();
                 startActivity(intent);
                 mSocket.disconnect();
             }
