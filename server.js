@@ -36,6 +36,13 @@ socketio.listen(server).on("connection", function(socket) {
 		}
 	});
 
+	socket.on("add_friend", function(data) {
+		if (clients.hasOwnProperty(data) == true)
+			mSocket.emit("add_friend_success");
+		else
+			mSocket.emit("add_friend_failure");
+	});
+
 	socket.on("error", function(err) {
 		console.log("There is an error: " + err);
 	});
