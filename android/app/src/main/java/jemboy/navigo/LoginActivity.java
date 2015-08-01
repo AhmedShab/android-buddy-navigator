@@ -69,7 +69,7 @@ public class LoginActivity extends Activity {
         mSocket.on("login_success", new Emitter.Listener() {
             @Override
             public void call(Object... args) {
-                Intent intent = new Intent(LoginActivity.this, Blank.class);
+                Intent intent = new Intent(LoginActivity.this, FriendsActivity.class);
                 startActivity(intent);
                 mSocket.disconnect();
             }
