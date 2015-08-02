@@ -3,10 +3,12 @@ package jemboy.navigo;
 import android.app.ActionBar;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.InputType;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -33,6 +35,9 @@ public class FriendsActivity extends Activity {
         }
     }
 
+    Dialog mDialog;
+    Button dialogAddFriend;
+    Button dialogCancel;
     Button mAddFriendButton;
     ListView mFriendList;
 
@@ -40,8 +45,13 @@ public class FriendsActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_friends);
-
         mSocket.connect();
+
+        mDialog = new Dialog(this);
+        mDialog.setContentView(R.layout.dialog_friends);
+
+        dialogAddFriend = (Button)mDialog.findViewById(R.id.add_friend);
+        dialogCancel = (Button)mDialog.findViewById(R.id.cancel);
 
         mAddFriendButton = (Button)findViewById(R.id.friend_add);
         mAddFriendButton.setOnClickListener(new View.OnClickListener() {
@@ -52,7 +62,27 @@ public class FriendsActivity extends Activity {
         });
 
         mFriendList = (ListView)findViewById(R.id.friend_list);
+        setMFriendList();
+    }
 
+    private void addFriend() {
+        dialogAddFriend.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Add shit
+                mDialog.dismiss();
+            }
+        });
+        dialogCancel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mDialog.dismiss();
+            }
+        });
+        mDialog.show();
+    }
+
+    private void setMFriendList() {
         SharedPreferences sharedPreferences = getSharedPreferences("friend_list", MODE_PRIVATE);
         Set<String> sharedPrefInstance = sharedPreferences.getStringSet("friend_array", new HashSet<String>());
         Set<String> friendSet = new HashSet<String>();
@@ -60,66 +90,21 @@ public class FriendsActivity extends Activity {
         createList(friendSet);
     }
 
-    private void addFriend() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-
-        final EditText mInput = new EditText(this);
-        mInput.setHint("Username");
-
-        mInput.setInputType(InputType.TYPE_CLASS_TEXT);
-        builder.setView(mInput);
-
-        builder.setPositiveButton("Add Friend", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                mSocket.emit("add_friend", mInput.getText().toString());
-                mSocket.on("add_friend_success", new Emitter.Listener() {
-                    @Override
-                    public void call(Object... args) {
-                        SharedPreferences sharedPreferences = getSharedPreferences("friend_list", MODE_PRIVATE);
-                        SharedPreferences.Editor editor = sharedPreferences.edit();
-                        Set<String> sharedPrefInstance = sharedPreferences.getStringSet("friend_array", new HashSet<String>());
-                        Set<String> friendSet = new HashSet<String>();
-                        friendSet.addAll(sharedPrefInstance);
-                        friendSet.add(mInput.getText().toString());
-                        editor.putStringSet("friend_array", friendSet);
-                        editor.commit();
-                    }
-                });
-                mSocket.on("add_friend_failure", new Emitter.Listener() {
-                    @Override
-                    public void call(Object... args) {
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                Toast.makeText(getApplicationContext(),
-                                        "User not found", Toast.LENGTH_SHORT).show();
-                            }
-                        });
-                    }
-                });
-            }
-        });
-        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                // Do nothing
-            }
-        });
-        builder.show();
-    }
-
     private void createList(Set<String> friendSet) {
         ArrayList<String> mFriends = new ArrayList<String>();
         mFriends.addAll(friendSet);
-        ArrayAdapter mFriendsAdapter = new ArrayAdapter(
+        final ArrayAdapter mFriendsAdapter = new ArrayAdapter(
                 getApplicationContext(),
                 android.R.layout.simple_list_item_1,
                 android.R.id.text1,
                 mFriends
         );
-
-        mFriendList.setAdapter(mFriendsAdapter);
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mFriendList.setAdapter(mFriendsAdapter);
+            }
+        });
         mFriendList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -127,5 +112,4 @@ public class FriendsActivity extends Activity {
             }
         });
     }
-
 }

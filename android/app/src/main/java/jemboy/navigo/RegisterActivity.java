@@ -73,7 +73,7 @@ public class RegisterActivity extends Activity {
             e.printStackTrace();
         }
         mSocket.emit("register", jsonObject);
-        mSocket.on("register_success", new Emitter.Listener() {
+        mSocket.once("register_success", new Emitter.Listener() {
             @Override
             public void call(Object... args) {
                 Intent intent = new Intent(RegisterActivity.this, LaunchActivity.class);
@@ -82,7 +82,7 @@ public class RegisterActivity extends Activity {
                 mSocket.disconnect();
             }
         });
-        mSocket.on("register_fail", new Emitter.Listener() {
+        mSocket.once("register_fail", new Emitter.Listener() {
             @Override
             public void call(Object... args) {
                 runOnUiThread(new Runnable() {
@@ -92,7 +92,6 @@ public class RegisterActivity extends Activity {
                         mUsernameView.setError(getString(R.string.error_taken_username));
                     }
                 });
-                mSocket.disconnect();
             }
         });
     }

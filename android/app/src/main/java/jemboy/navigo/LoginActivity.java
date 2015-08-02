@@ -66,7 +66,7 @@ public class LoginActivity extends Activity {
             e.printStackTrace();
         }
         mSocket.emit("login", jsonObject);
-        mSocket.on("login_success", new Emitter.Listener() {
+        mSocket.once("login_success", new Emitter.Listener() {
             @Override
             public void call(Object... args) {
                 Intent intent = new Intent(LoginActivity.this, FriendsActivity.class);
@@ -74,7 +74,7 @@ public class LoginActivity extends Activity {
                 mSocket.disconnect();
             }
         });
-        mSocket.on("incorrect_username", new Emitter.Listener() {
+        mSocket.once("incorrect_username", new Emitter.Listener() {
             @Override
             public void call(Object... args) {
                 runOnUiThread(new Runnable() {
@@ -87,7 +87,7 @@ public class LoginActivity extends Activity {
                 mSocket.disconnect();
             }
         });
-        mSocket.on("incorrect_password", new Emitter.Listener() {
+        mSocket.once("incorrect_password", new Emitter.Listener() {
             @Override
             public void call(Object... args) {
                 runOnUiThread(new Runnable() {
