@@ -5,17 +5,26 @@ var socketio = require("socket.io");
 const PORT = 8080;
 
 var server = http.createServer(function(request, response) {
-	response.writeHead(200, {"Content-type": "text/html"});
-	response.end();
+	response.writeHead(200, {"Content-type": "application/json"});
+	var array = ["merkel", "jemboy", "putin"];
+	var json = JSON.stringify({
+		usernames: array
+	});
+	response.end(json);
 }).listen(PORT, function() {
 	console.log("Server listening at: http://localhost:" + PORT);
 });
 
-clients = {};
-passwords = {};
+clients = {};		// Holds currently online clients
+
+/**
+ * Passwords hold all registered clients
+ * I added some users here so there is no need to register each time to test features
+ */
+passwords = {"merkel": "123456", "putin": "123456", "obama": "123456"};		// Holds all registered clients
 socketio.listen(server).on("connection", function(socket) {
 	socket.on("register", function(data) {
-		if (clients.hasOwnProperty(data.username) == false) {
+		if (passwords.hasOwnProperty(data.username) == false) {
 			clients[data.username] = socket;
 			passwords[data.username] = data.password;
 			socket.emit("register_success");
@@ -37,10 +46,10 @@ socketio.listen(server).on("connection", function(socket) {
 	});
 
 	socket.on("add_friend", function(data) {
-		if (clients.hasOwnProperty(data) == true)
-			mSocket.emit("add_friend_success");
-		else
-			mSocket.emit("add_friend_failure");
+		if (passwords.hasOwnProperty(data) == true) {
+			console.log("Success!")
+			socket.emit("add_friend_success");
+		}
 	});
 
 	socket.on("error", function(err) {

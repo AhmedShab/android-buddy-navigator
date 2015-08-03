@@ -36,6 +36,7 @@ public class FriendsActivity extends Activity {
     }
 
     Dialog mDialog;
+    EditText dialogInput;
     Button dialogAddFriend;
     Button dialogCancel;
     Button mAddFriendButton;
@@ -50,6 +51,7 @@ public class FriendsActivity extends Activity {
         mDialog = new Dialog(this);
         mDialog.setContentView(R.layout.dialog_friends);
 
+        dialogInput = (EditText)mDialog.findViewById(R.id.input);
         dialogAddFriend = (Button)mDialog.findViewById(R.id.add_friend);
         dialogCancel = (Button)mDialog.findViewById(R.id.cancel);
 
@@ -69,13 +71,31 @@ public class FriendsActivity extends Activity {
         dialogAddFriend.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // Add shit
+                final String friendUsername = dialogInput.getText().toString();
+                mSocket.emit("add_friend", friendUsername);
+                mSocket.on("add_friend_success", new Emitter.Listener() {
+                    @Override
+                    public void call(Object... args) {
+                        Log.d("Tag: ", "Entered");
+                        SharedPreferences sharedPreferences = getSharedPreferences("friend_list", MODE_PRIVATE);
+                        SharedPreferences.Editor editor = sharedPreferences.edit();
+                        Set<String> sharedPrefInstance = sharedPreferences.getStringSet("friend_array", new HashSet<String>());
+                        Set<String> friendSet = new HashSet<String>();
+                        friendSet.addAll(sharedPrefInstance);
+                        friendSet.add(friendUsername);
+                        editor.putStringSet("friend_array", friendSet);
+                        editor.commit();
+                        createList(friendSet);
+                    }
+                });
+                dialogInput.setText("");
                 mDialog.dismiss();
             }
         });
         dialogCancel.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                dialogInput.setText("");
                 mDialog.dismiss();
             }
         });
