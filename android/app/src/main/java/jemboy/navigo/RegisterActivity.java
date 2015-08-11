@@ -44,7 +44,7 @@ public class RegisterActivity extends Activity {
             public void onClick(View view) {
                 if (inputCheck() == true) {
                     new RegisterOperation(Constants.LINK,
-                            mUsernameView.getText().toString()).execute();
+                            mUsernameView.getText().toString(), mPasswordView.getText().toString()).execute();
                 }
             }
         });
@@ -52,10 +52,11 @@ public class RegisterActivity extends Activity {
 
     private class RegisterOperation extends AsyncTask<Void, Void, Boolean> {
         ProgressDialog progressDialog = new ProgressDialog(RegisterActivity.this);
-        String myurl, username;
-        RegisterOperation(String myurl, String username) {
-            this.myurl = myurl;
+        String link, username, password;
+        RegisterOperation(String link, String username, String password) {
+            this.link = link;
             this.username = username;
+            this.password = password;
             progressDialog.setMessage("Registering...");
         }
 
@@ -68,22 +69,34 @@ public class RegisterActivity extends Activity {
         protected Boolean doInBackground(Void... params) {
             URL url;
             HttpURLConnection conn = null;
-            InputStream inputStream;
-            DataOutputStream dataOutputStream;
+            InputStream inputStream = null;
             try {
-                url = new URL(this.myurl);
+                url = new URL(this.link);
                 conn = (HttpURLConnection)url.openConnection();
                 conn.setReadTimeout(15000);
                 conn.setConnectTimeout(15000);
                 conn.setRequestMethod("POST");
                 conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
 
-                String data = "username=" + this.username;
+                String data = "request=register&username=" + this.username + "&password=" + this.password;
                 conn.setFixedLengthStreamingMode(data.getBytes().length);
                 BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(conn.getOutputStream()));
                 writer.write(data);
                 writer.flush();
                 writer.close();
+
+                inputStream = conn.getInputStream();
+                StringBuffer stringBuffer = new StringBuffer();
+                int character;
+                while ((character = inputStream.read()) != -1) {
+                    stringBuffer.append((char) character);
+                }
+                Log.d("Tag: ", stringBuffer.toString());
+                inputStream.close();
+                if (stringBuffer.toString().equals("true"))
+                    return true;
+                else
+                    return false;
             } catch (Exception e) {
                 e.printStackTrace();
                 Log.d("Tag: ", "Caught an exception: " + e.toString());
@@ -98,7 +111,7 @@ public class RegisterActivity extends Activity {
             progressDialog.dismiss();
             if (result == true) {
                 Intent intent = new Intent(RegisterActivity.this, LaunchActivity.class);
-                // Toast.makeText(getApplicationContext(), "Registration Successful", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(), "Registration Successful", Toast.LENGTH_SHORT).show();
                 startActivity(intent);
             } else {
                 mUsernameView.setError(getString(R.string.error_taken_username));
