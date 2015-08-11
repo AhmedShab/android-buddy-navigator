@@ -4,12 +4,16 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.github.nkzawa.emitter.Emitter;
 import com.github.nkzawa.socketio.client.IO;
@@ -18,7 +22,12 @@ import com.github.nkzawa.socketio.client.Socket;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedWriter;
+import java.io.InputStream;
+import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
+import java.net.URL;
 
 public class LoginActivity extends Activity {
     private Socket mSocket;
@@ -33,8 +42,6 @@ public class LoginActivity extends Activity {
     private Button mSignInButton;
     private TextView mUsernameView;
     private TextView mPasswordView;
-    private View mLoginFormView;
-    private View mProgressView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,90 +55,77 @@ public class LoginActivity extends Activity {
         mSignInButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                attemptLogin();
+                new LoginOperation(Constants.LINK,
+                        mUsernameView.getText().toString(), mPasswordView.getText().toString()).execute();
             }
         });
-        mLoginFormView = findViewById(R.id.login_form);
-        mProgressView = findViewById(R.id.login_progress);
     }
 
-    private void attemptLogin() {
-        showProgress(true);
-        mSocket.connect();
-        JSONObject jsonObject = new JSONObject();
-        try {
-            jsonObject.put("username", mUsernameView.getText().toString());
-            jsonObject.put("password", mPasswordView.getText().toString()); // Need to hash the password here!
-        } catch (JSONException e) {
-            e.printStackTrace();
+    private class LoginOperation extends AsyncTask<Void, Void, Boolean> {
+        ProgressDialog progressDialog = new ProgressDialog(LoginActivity.this);
+        String link, username, password;
+        LoginOperation(String link, String username, String password) {
+            this.link = link;
+            this.username = username;
+            this.password = password;
+            progressDialog.setMessage("Logging In...");
         }
-        mSocket.emit("login", jsonObject);
-        mSocket.once("login_success", new Emitter.Listener() {
-            @Override
-            public void call(Object... args) {
-                Intent intent = new Intent(LoginActivity.this, FriendsActivity.class);
+
+        @Override
+        protected void onPreExecute() {
+            progressDialog.show();
+        }
+
+        @Override
+        protected Boolean doInBackground(Void... params) {
+            URL url;
+            HttpURLConnection conn = null;
+            InputStream inputStream = null;
+            try {
+                url = new URL(this.link);
+                conn = (HttpURLConnection)url.openConnection();
+                conn.setReadTimeout(15000);
+                conn.setConnectTimeout(15000);
+                conn.setRequestMethod("POST");
+                conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+
+                String data = "request=login&username=" + this.username + "&password=" + this.password;
+                conn.setFixedLengthStreamingMode(data.getBytes().length);
+                BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(conn.getOutputStream()));
+                writer.write(data);
+                writer.flush();
+                writer.close();
+
+                inputStream = conn.getInputStream();
+                StringBuffer stringBuffer = new StringBuffer();
+                int character;
+                while ((character = inputStream.read()) != -1) {
+                    stringBuffer.append((char) character);
+                }
+                inputStream.close();
+                if (stringBuffer.toString().equals("true"))
+                    return true;
+                else
+                    return false;
+            } catch (Exception e) {
+                e.printStackTrace();
+                Log.d("Tag: ", "Caught an exception: " + e.toString());
+            } finally {
+                conn.disconnect();
+            }
+            return false;
+        }
+
+        @Override
+        protected void onPostExecute(Boolean result) {
+            progressDialog.dismiss();
+            if (result == true) {
+                Intent intent = new Intent(LoginActivity.this, Blank.class);
+                Toast.makeText(getApplicationContext(), "Login Successful", Toast.LENGTH_SHORT).show();
                 startActivity(intent);
-                mSocket.disconnect();
+            } else {
+                mUsernameView.setError(getString(R.string.error_invalid_username));
             }
-        });
-        mSocket.once("incorrect_username", new Emitter.Listener() {
-            @Override
-            public void call(Object... args) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        showProgress(false);
-                        mUsernameView.setError(getString(R.string.error_invalid_username));
-                    }
-                });
-                mSocket.disconnect();
-            }
-        });
-        mSocket.once("incorrect_password", new Emitter.Listener() {
-            @Override
-            public void call(Object... args) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        showProgress(false);
-                        mPasswordView.setError(getString(R.string.error_invalid_password));
-                    }
-                });
-                mSocket.disconnect();
-            }
-        });
-    }
-
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR2)
-     public void showProgress(final boolean show) {
-        // On Honeycomb MR2 we have the ViewPropertyAnimator APIs, which allow
-        // for very easy animations. If available, use these APIs to fade-in
-        // the progress spinner.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
-            int shortAnimTime = getResources().getInteger(android.R.integer.config_shortAnimTime);
-
-            mLoginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
-            mLoginFormView.animate().setDuration(shortAnimTime).alpha(
-                    show ? 0 : 1).setListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    mLoginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
-                }
-            });
-
-            mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
-            mProgressView.animate().setDuration(shortAnimTime).alpha(
-                    show ? 1 : 0).setListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
-                }
-            });
-        } else {
-            // The ViewPropertyAnimator APIs are not available, so simply show
-            // and hide the relevant UI components.
-            mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
-            mLoginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
         }
     }
 

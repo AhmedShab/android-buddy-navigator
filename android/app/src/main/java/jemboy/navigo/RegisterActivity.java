@@ -91,7 +91,6 @@ public class RegisterActivity extends Activity {
                 while ((character = inputStream.read()) != -1) {
                     stringBuffer.append((char) character);
                 }
-                Log.d("Tag: ", stringBuffer.toString());
                 inputStream.close();
                 if (stringBuffer.toString().equals("true"))
                     return true;

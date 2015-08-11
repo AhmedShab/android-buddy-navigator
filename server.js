@@ -17,7 +17,7 @@ var server = http.createServer(function (request, response) {
 				response.end("true");
 			}
 		} else if (post["request"] == "login") {
-			if (credentials.hasOwnProperty("username") == true && credentials["username"] == post["password"])
+			if (credentials.hasOwnProperty(post["username"]) == true && credentials[post["username"]] == post["password"])
 				response.end("true");
 			else
 				response.end("false");
