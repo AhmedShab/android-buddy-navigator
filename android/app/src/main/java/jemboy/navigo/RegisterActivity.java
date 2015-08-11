@@ -1,25 +1,25 @@
 package jemboy.navigo;
 
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
-
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
@@ -43,7 +43,8 @@ public class RegisterActivity extends Activity {
             @Override
             public void onClick(View view) {
                 if (inputCheck() == true) {
-                    new RegisterOperation(Constants.LINK, mUsernameView.getText().toString()).execute();
+                    new RegisterOperation(Constants.LINK,
+                            mUsernameView.getText().toString()).execute();
                 }
             }
         });
@@ -66,58 +67,30 @@ public class RegisterActivity extends Activity {
         @Override
         protected Boolean doInBackground(Void... params) {
             URL url;
-            HttpURLConnection conn;
+            HttpURLConnection conn = null;
             InputStream inputStream;
+            DataOutputStream dataOutputStream;
             try {
-                url = new URL(myurl);
+                url = new URL(this.myurl);
                 conn = (HttpURLConnection)url.openConnection();
-                conn.setReadTimeout(10000 /* milliseconds */);
-                conn.setConnectTimeout(15000 /* milliseconds */);
-                conn.setRequestMethod("GET");
-                conn.setDoInput(true);
-                conn.connect();
-                int response = conn.getResponseCode();
-                if (response == 200) {
-                    inputStream = conn.getInputStream();
-                    String responseString = readStream(inputStream);
-                    JSONObject jsonObject = new JSONObject(responseString);
-                    JSONArray jsonArray = jsonObject.getJSONArray("usernames");
-                    for (int i = 0; i < jsonArray.length(); i++) {
-                        if (username.equals(jsonArray.getString(i))) {
-                            inputStream.close();
-                            return false;
-                        }
-                    }
-                    inputStream.close();
-                    return true;
-                }
+                conn.setReadTimeout(15000);
+                conn.setConnectTimeout(15000);
+                conn.setRequestMethod("POST");
+                conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+
+                String data = "username=" + this.username;
+                conn.setFixedLengthStreamingMode(data.getBytes().length);
+                BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(conn.getOutputStream()));
+                writer.write(data);
+                writer.flush();
+                writer.close();
             } catch (Exception e) {
                 e.printStackTrace();
+                Log.d("Tag: ", "Caught an exception: " + e.toString());
+            } finally {
+                conn.disconnect();
             }
             return false;
-        }
-
-        String readStream(InputStream inputStream) {
-            BufferedReader bufferedReader = null;
-            StringBuffer stringBuffer = new StringBuffer();
-            try {
-                bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
-                String line;
-                while ((line = bufferedReader.readLine()) != null) {
-                    stringBuffer.append(line);
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
-                if (bufferedReader != null) {
-                    try {
-                        bufferedReader.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-            return stringBuffer.toString();
         }
 
         @Override
