@@ -4,8 +4,11 @@ import android.app.ActionBar;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.InputType;
 import android.util.Log;
@@ -20,21 +23,18 @@ import android.widget.Toast;
 import com.github.nkzawa.emitter.Emitter;
 import com.github.nkzawa.socketio.client.IO;
 import com.github.nkzawa.socketio.client.Socket;
+
+import java.io.BufferedWriter;
+import java.io.InputStream;
+import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
 public class FriendsActivity extends Activity {
-    private Socket mSocket;
-    {
-        try {
-            mSocket = IO.socket(Constants.LINK);
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     Dialog mDialog;
     EditText dialogInput;
     Button dialogAddFriend;
@@ -46,7 +46,6 @@ public class FriendsActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_friends);
-        mSocket.connect();
 
         mDialog = new Dialog(this);
         mDialog.setContentView(R.layout.dialog_friends);
@@ -59,58 +58,94 @@ public class FriendsActivity extends Activity {
         mAddFriendButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                addFriend();
+                new FriendOperation(Constants.LINK,
+                        dialogInput.getText().toString()).execute();
             }
         });
-
         mFriendList = (ListView)findViewById(R.id.friend_list);
-        setMFriendList();
-    }
 
-    private void addFriend() {
-        dialogAddFriend.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                final String friendUsername = dialogInput.getText().toString();
-                mSocket.emit("add_friend", friendUsername);
-                mSocket.on("add_friend_success", new Emitter.Listener() {
-                    @Override
-                    public void call(Object... args) {
-                        Log.d("Tag: ", "Entered");
-                        SharedPreferences sharedPreferences = getSharedPreferences("friend_list", MODE_PRIVATE);
-                        SharedPreferences.Editor editor = sharedPreferences.edit();
-                        Set<String> sharedPrefInstance = sharedPreferences.getStringSet("friend_array", new HashSet<String>());
-                        Set<String> friendSet = new HashSet<String>();
-                        friendSet.addAll(sharedPrefInstance);
-                        friendSet.add(friendUsername);
-                        editor.putStringSet("friend_array", friendSet);
-                        editor.commit();
-                        createList(friendSet);
-                    }
-                });
-                dialogInput.setText("");
-                mDialog.dismiss();
-            }
-        });
-        dialogCancel.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dialogInput.setText("");
-                mDialog.dismiss();
-            }
-        });
-        mDialog.show();
-    }
-
-    private void setMFriendList() {
         SharedPreferences sharedPreferences = getSharedPreferences("friend_list", MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
         Set<String> sharedPrefInstance = sharedPreferences.getStringSet("friend_array", new HashSet<String>());
         Set<String> friendSet = new HashSet<String>();
         friendSet.addAll(sharedPrefInstance);
-        createList(friendSet);
+        createFriendList(friendSet);
     }
 
-    private void createList(Set<String> friendSet) {
+    private class FriendOperation extends AsyncTask<Void, Void, Boolean> {
+        ProgressDialog progressDialog = new ProgressDialog(FriendsActivity.this);
+        String link, username;
+        FriendOperation(String link, String username) {
+            this.link = link;
+            this.username = username;
+            progressDialog.setMessage("Adding...");
+        }
+
+        @Override
+        protected void onPreExecute() {
+            progressDialog.show();
+        }
+
+        @Override
+        protected Boolean doInBackground(Void... params) {
+            URL url;
+            HttpURLConnection conn = null;
+            InputStream inputStream = null;
+            try {
+                url = new URL(this.link);
+                conn = (HttpURLConnection)url.openConnection();
+                conn.setReadTimeout(15000);
+                conn.setConnectTimeout(15000);
+                conn.setRequestMethod("POST");
+                conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+
+                String data = "request=friend&username=" + this.username;
+                conn.setFixedLengthStreamingMode(data.getBytes().length);
+                BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(conn.getOutputStream()));
+                writer.write(data);
+                writer.flush();
+                writer.close();
+
+                inputStream = conn.getInputStream();
+                StringBuffer stringBuffer = new StringBuffer();
+                int character;
+                while ((character = inputStream.read()) != -1) {
+                    stringBuffer.append((char) character);
+                }
+                inputStream.close();
+                if (stringBuffer.toString().equals("true"))
+                    return true;
+                else
+                    return false;
+            } catch (Exception e) {
+                e.printStackTrace();
+                Log.d("Tag: ", "Caught an exception: " + e.toString());
+            } finally {
+                conn.disconnect();
+            }
+            return false;
+        }
+
+        @Override
+        protected void onPostExecute(Boolean result) {
+            progressDialog.dismiss();
+            if (result == true) {
+                SharedPreferences sharedPreferences = getSharedPreferences("friend_list", MODE_PRIVATE);
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                Set<String> sharedPrefInstance = sharedPreferences.getStringSet("friend_array", new HashSet<String>());
+                Set<String> friendSet = new HashSet<String>();
+                friendSet.addAll(sharedPrefInstance);
+                friendSet.add(this.username);
+                editor.putStringSet("friend_array", friendSet);
+                editor.commit();
+                createFriendList(friendSet);
+            } else {
+                Toast.makeText(getApplicationContext(), "User Not Found", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    private void createFriendList(Set<String> friendSet) {
         ArrayList<String> mFriends = new ArrayList<String>();
         mFriends.addAll(friendSet);
         final ArrayAdapter mFriendsAdapter = new ArrayAdapter(
@@ -128,7 +163,7 @@ public class FriendsActivity extends Activity {
         mFriendList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                // Do something else
+                // Do something
             }
         });
     }

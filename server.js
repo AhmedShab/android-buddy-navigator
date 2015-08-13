@@ -21,6 +21,11 @@ var server = http.createServer(function (request, response) {
 				response.end("true");
 			else
 				response.end("false");
+		} else if (post["request"] == "friend") {
+			if (credentials.hasOwnProperty(post["username"]) == true)
+				response.end("true");
+			else
+				response.end("false");
 		}
 	});
 }).listen(PORT, function() {
