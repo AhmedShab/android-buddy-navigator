@@ -77,7 +77,7 @@ public class GPSTracker extends Service
                         mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
                         if (mLastLocation != null) {
                             Intent intent = new Intent();
-                            intent.setAction("jemboy.compass.location");
+                            intent.setAction("jemboy.navigo.location");
                             intent.putExtra("action", "GPSInfo");
                             intent.putExtra("latitude", (float) mLastLocation.getLatitude());
                             intent.putExtra("longitude", (float) mLastLocation.getLongitude());

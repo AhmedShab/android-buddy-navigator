@@ -1,16 +1,12 @@
 package jemboy.navigo;
 
-import android.app.ActionBar;
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ProgressDialog;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.text.InputType;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
@@ -19,22 +15,17 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
-
-import com.github.nkzawa.emitter.Emitter;
-import com.github.nkzawa.socketio.client.IO;
-import com.github.nkzawa.socketio.client.Socket;
-
 import java.io.BufferedWriter;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
 public class FriendsActivity extends Activity {
+    String username;
     Dialog mDialog;
     EditText dialogInput;
     Button dialogAddFriend;
@@ -46,6 +37,8 @@ public class FriendsActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_friends);
+
+        username = getIntent().getStringExtra("current");
 
         mDialog = new Dialog(this);
         mDialog.setContentView(R.layout.dialog_friends);
@@ -163,7 +156,10 @@ public class FriendsActivity extends Activity {
         mFriendList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                // Do something
+                Intent intent = new Intent(FriendsActivity.this, CompassActivity.class);
+                intent.putExtra("current", username);
+                intent.putExtra("target", mFriendList.getItemAtPosition(position).toString());
+                startActivity(intent);
             }
         });
     }

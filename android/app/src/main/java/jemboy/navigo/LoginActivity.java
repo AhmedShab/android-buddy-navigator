@@ -120,7 +120,8 @@ public class LoginActivity extends Activity {
         protected void onPostExecute(Boolean result) {
             progressDialog.dismiss();
             if (result == true) {
-                Intent intent = new Intent(LoginActivity.this, Blank.class);
+                Intent intent = new Intent(LoginActivity.this, FriendsActivity.class);
+                intent.putExtra("current", this.username);
                 Toast.makeText(getApplicationContext(), "Login Successful", Toast.LENGTH_SHORT).show();
                 startActivity(intent);
             } else {

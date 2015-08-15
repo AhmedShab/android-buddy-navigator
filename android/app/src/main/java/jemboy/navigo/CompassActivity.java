@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.widget.ImageView;
 
 public class CompassActivity extends Activity {
+    String current, target;
     private GPSReceiver gpsReceiver;
     private ImageView mArrowView;
 
@@ -15,6 +16,9 @@ public class CompassActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_compass);
         mArrowView = (ImageView)findViewById(R.id.arrow);
+
+        current = getIntent().getStringExtra("current");
+        target = getIntent().getStringExtra("target");
 
         gpsReceiver = new GPSReceiver() {
             @Override
@@ -25,14 +29,12 @@ public class CompassActivity extends Activity {
 
         this.registerReceiver(gpsReceiver, new IntentFilter("jemboy.navigo.location"));
         Intent GPSIntent = new Intent(this, GPSTracker.class);
-        Intent CompassIntent = new Intent(this, CompassTracker.class);
         startService(GPSIntent);
-        startService(CompassIntent);
     }
 
     @Override
     public void onResume() {
-        this.registerReceiver(gpsReceiver, new IntentFilter("jemboy.compass.location"));
+        this.registerReceiver(gpsReceiver, new IntentFilter("jemboy.navigo.location"));
         super.onResume();
     }
 
