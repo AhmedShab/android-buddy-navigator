@@ -1,5 +1,6 @@
 var http = require("http"),
-	querystring = require("querystring");
+	querystring = require("querystring"),
+	socketio = require("socket.io");
 
 const PORT = 8080;
 var credentials = {};
@@ -28,26 +29,20 @@ var server = http.createServer(function (request, response) {
 				response.end("false");
 		}
 	});
-}).listen(PORT, function() {
+}).listen(PORT, function () {
 	console.log("Server listening at: http://localhost:" + PORT);
 });
 
-/*
-switch (request.url) {
-		case "/example":
-			response.writeHead(200, "Stuff", {"Content Type": "application/x-www-form-urlencoded"});
-			response.end();
-			console.log("It works.");
-			if (request.method == "POST") {
-				request.on("data", function (data) {
-					console.log("Data: " + data.toString());
-				});
-			}
-			break;
-		case "/exemplary":
-			console.log("It really does.");
-			break;
-		default:
-			console.log("Default.");
-	};
-*/
+socketio.listen(server).on("connection", function (socket) {
+	socket.on("location", function (data) {
+		// This will be used for updating the cursor and sending data to the other guy
+	});
+
+	socket.on("error", function (err) {
+		console.log("There is an error: " + err);
+	});
+
+	socket.on("disconnect", function () {
+		
+	});
+});
