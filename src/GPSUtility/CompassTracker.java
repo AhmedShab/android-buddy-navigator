@@ -1,4 +1,4 @@
-package jemboy.navitwo.Sensors;
+package jemboy.navitwo.GPSUtility;
 
 import android.app.Service;
 import android.content.Context;
