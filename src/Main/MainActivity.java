@@ -2,30 +2,54 @@ package jemboy.navitwo.Main;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.content.IntentFilter;
+import android.net.Network;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.TextView;
+
 import jemboy.navitwo.GPSUtility.GPSReceiver;
-import jemboy.navitwo.GPSUtility.GPSTracker;
-import jemboy.navitwo.Network.NetworkTask;
+import jemboy.navitwo.Network.DownloadIDTask;
+import jemboy.navitwo.Network.UploadIDTask;
 import jemboy.navitwo.R;
-import jemboy.navitwo.Sensors.CompassTracker;
-import jemboy.navitwo.Utility.Ultimate;
+import jemboy.navitwo.Utility.Constants;
 
 public class MainActivity extends Activity {
-    Intent gpsIntent, compassIntent;
-    GPSReceiver gpsReceiver;
+    private Button uploadButton, downloadButton;
+    private EditText localID, remoteID;
+    private Intent gpsIntent, compassIntent;
+    private GPSReceiver gpsReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Ultimate ultimate = new Ultimate((ImageView)findViewById(R.id.imageView));
+        uploadButton = (Button)findViewById(R.id.upload_button);
+        downloadButton = (Button)findViewById(R.id.download_button);
 
-        new NetworkTask(ultimate).execute(40.891381f, 29.380003f);
+        localID = (EditText)findViewById(R.id.local_identification);
+        remoteID = (EditText)findViewById(R.id.remote_identification);
+
+        uploadButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new UploadIDTask(Constants.serverIP, uploadButton).execute(localID.getText().toString());
+            }
+        });
+
+        downloadButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new DownloadIDTask(Constants.serverIP, downloadButton).execute(remoteID.getText().toString());
+            }
+        });
+
 
         /*
+        Ultimate ultimate = new Ultimate((ImageView)findViewById(R.id.imageView));
         gpsIntent = new Intent(this, GPSTracker.class);
         compassIntent = new Intent(this, CompassTracker.class);
         gpsReceiver = new GPSReceiver(ultimate);
