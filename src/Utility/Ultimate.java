@@ -13,7 +13,7 @@ public class Ultimate {
     public Ultimate(ImageView imageView) {
         this.imageView = imageView;
     }
-
+/*
     public void rotateImageView() {
         RotateAnimation rotateAnimation = new RotateAnimation(
                 fromDegree,
@@ -43,5 +43,5 @@ public class Ultimate {
         azimuth                         = (float)Math.toDegrees(Math.atan2(deltaLong, X));
         updateDegree(0f);
     }
-
+*/
 }
