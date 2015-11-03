@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.net.Network;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -21,6 +22,7 @@ public class MainActivity extends Activity {
     private EditText localID, remoteID;
     private Intent gpsIntent, compassIntent;
     private GPSReceiver gpsReceiver;
+    private String pastID = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,17 +38,21 @@ public class MainActivity extends Activity {
         uploadButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                new UploadIDTask(Constants.serverIP, uploadButton).execute(localID.getText().toString());
+                String newID = localID.getText().toString();
+                Log.d("Tag: ", newID + " " + pastID);
+                if (pastID.equals(newID) == false)
+                    new UploadIDTask(MainActivity.this, Constants.serverIP, uploadButton)
+                            .execute(localID.getText().toString(), pastID);
             }
         });
 
         downloadButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                new DownloadIDTask(Constants.serverIP, downloadButton).execute(remoteID.getText().toString());
+                new DownloadIDTask(Constants.serverIP, downloadButton)
+                        .execute(remoteID.getText().toString());
             }
         });
-
 
         /*
         Ultimate ultimate = new Ultimate((ImageView)findViewById(R.id.imageView));
@@ -54,6 +60,10 @@ public class MainActivity extends Activity {
         compassIntent = new Intent(this, CompassTracker.class);
         gpsReceiver = new GPSReceiver(ultimate);
         */
+    }
+
+    public void setPastID() {
+        pastID = localID.getText().toString();
     }
 
     @Override

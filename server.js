@@ -1,34 +1,30 @@
-var http = require("http");	
+var http = require("http");
+var querystring = require("querystring");
 
 const PORT = 8080;
-
 var userIDs = ["Jemboy"];
 
-var server = http.createServer(function(request, response) {
-	response.writeHead(200, "Header", {"Content-Type": "application/json"});
-	console.log("Connected.");
+var server = http.createServer(function (request, response) {
+	response.writeHead(200, "Header", {"Content-Type": "application/x-www-form-urlencoded"});
 
-	request.on("data", function(data) {
-		var request = post["request"];
+	request.on("data", function (data) {
+		post = querystring.parse(data.toString());
+		var request = post["request"], localID = post["localID"];
+		console.log(request + " " + localID);
 		if (request == "upload") {
-			console.log("I am in UPLOAD().");
-			var localID = post["localID"];
-			if (userIDs.hasOwnProperty(localID)) {
-				console.log("Fail");
+			if (userIDs.indexOf(localID) > -1) {
 				response.end("Fail");
 			}
 			else {
-				console.log("Success");
+				var pastID = post["pastID"];
+				if (userIDs.indexOf(pastID) > -1)
+					userIDs.splice(userIDs.indexOf(pastID), 1);
 				userIDs.push(localID);
 				response.end("Success");
 			}
 		}
+		console.log(userIDs);
 	});
-
-
-
-
-
 	
 }).listen(PORT, function () {
 	console.log("Server listening at: http://localhost:" + PORT);
