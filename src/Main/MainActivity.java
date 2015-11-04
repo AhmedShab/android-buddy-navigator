@@ -39,18 +39,18 @@ public class MainActivity extends Activity {
             @Override
             public void onClick(View v) {
                 String newID = localID.getText().toString();
-                Log.d("Tag: ", newID + " " + pastID);
-                if (pastID.equals(newID) == false)
+                if (pastID.equals(newID) == false && newID.equals("") == false)
                     new UploadIDTask(MainActivity.this, Constants.serverIP, uploadButton)
-                            .execute(localID.getText().toString(), pastID);
+                            .execute(newID, pastID);
             }
         });
 
         downloadButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                String newID = remoteID.getText().toString();
                 new DownloadIDTask(Constants.serverIP, downloadButton)
-                        .execute(remoteID.getText().toString());
+                        .execute(newID);
             }
         });
 
