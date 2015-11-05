@@ -9,9 +9,10 @@ var server = http.createServer(function (request, response) {
 
 	request.on("data", function (data) {
 		post = querystring.parse(data.toString());
-		var request = post["request"], localID = post["localID"];
-		console.log(request + " " + localID);
+		var request = post["request"];
+		console.log(request);
 		if (request == "upload") {
+			var localID = post["localID"];
 			if (userIDs.indexOf(localID) > -1) {
 				response.end("Fail");
 			}
@@ -22,6 +23,12 @@ var server = http.createServer(function (request, response) {
 				userIDs.push(localID);
 				response.end("Success");
 			}
+		}
+
+		if (request == "delete") {
+			var targetID = post["targetID"];
+			if (userIDs.indexOf(targetID) > -1)
+				userIDs.splice(userIDs.indexOf(targetID), 1);
 		}
 		console.log(userIDs);
 	});
