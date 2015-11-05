@@ -10,42 +10,56 @@ var server = http.createServer(function (request, response) {
 	request.on("data", function (data) {
 		post = querystring.parse(data.toString());
 		var request = post["request"];
-		console.log(request);
+
 		if (request == "upload") {
-			var localID = post["localID"];
-			if (userIDs.indexOf(localID) > -1) {
-				response.end("Fail");
-			}
-			else {
-				var pastID = post["pastID"];
-				if (userIDs.indexOf(pastID) > -1)
-					userIDs.splice(userIDs.indexOf(pastID), 1);
-				userIDs.push(localID);
-				response.end("Success");
-			}
+			var localID = post["localID"], pastID = post["pastID"];
+			uploadFunction(response, localID, pastID);
 		}
+
 
 		if (request == "download") {
 			var remoteID = post["remoteID"];
-			if (userIDs.indexOf(remoteID) > -1) {
-				response.end("Success");
-			}
-			else {
-				response.end("Fail");
-			}
+			downloadFunction(response, remoteID);
 		}
 
 		if (request == "delete") {
 			var targetID = post["targetID"];
-			if (userIDs.indexOf(targetID) > -1)
-				userIDs.splice(userIDs.indexOf(targetID), 1);
+			deleteFunction(response, targetID);
 		}
 		console.log(userIDs);
 	});
 	
-}).listen(PORT, function () {
+});
+
+server.listen(PORT, function () {
 	console.log("Server listening at: http://localhost:" + PORT);
 });
+
+var uploadFunction = function (response, localID, pastID) {
+	if (userIDs.indexOf(localID) > -1) {
+		response.end("Fail");
+	}
+	else {
+		if (userIDs.indexOf(pastID) > -1)
+			userIDs.splice(userIDs.indexOf(pastID), 1);
+		userIDs.push(localID);
+		response.end("Success");
+	}
+};
+
+var downloadFunction = function (response, remoteID) {
+	if (userIDs.indexOf(remoteID) > -1) {
+		response.end("Success");
+	}
+	else {
+		response.end("Fail");
+	}
+};
+
+var deleteFunction = function (response, targetID) {
+	if (userIDs.indexOf(targetID) > -1)
+		userIDs.splice(userIDs.indexOf(targetID), 1);
+};
 
 /*
 var jsonString = '[]';
