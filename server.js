@@ -25,6 +25,16 @@ var server = http.createServer(function (request, response) {
 			}
 		}
 
+		if (request == "download") {
+			var remoteID = post["remoteID"];
+			if (userIDs.indexOf(remoteID) > -1) {
+				response.end("Success");
+			}
+			else {
+				response.end("Fail");
+			}
+		}
+
 		if (request == "delete") {
 			var targetID = post["targetID"];
 			if (userIDs.indexOf(targetID) > -1)
