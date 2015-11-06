@@ -1,25 +1,61 @@
 package jemboy.navitwo.Network;
 
+import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.os.AsyncTask;
 import android.widget.Button;
 
-public class DownloadIDTask extends AsyncTask<String, Void, String> {
+import java.io.BufferedWriter;
+import java.io.InputStream;
+import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
+import jemboy.navitwo.Main.MainActivity;
+import jemboy.navitwo.Utility.Constants;
+
+public class DownloadIDTask extends AsyncTask<String, Void, Boolean> {
+    MainActivity mActivity;
     String serverIP;
     Button downloadButton;
 
-    public DownloadIDTask(String serverIP, Button downloadButton) {
+    public DownloadIDTask(MainActivity mActivity, String serverIP, Button downloadButton) {
+        this.mActivity = mActivity;
         this.serverIP = serverIP;
         this.downloadButton = downloadButton;
     }
 
-    protected String doInBackground(String... params) {
+    protected Boolean doInBackground(String... params) {
+        boolean result = false;
+        try {
+            URL url = new URL(serverIP);
+            HttpURLConnection connection = (HttpURLConnection)url.openConnection();
+            connection.setConnectTimeout(5000);
+            connection.setReadTimeout(5000);
+            connection.setRequestMethod("POST");
+            connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
 
-        return "";
+            String requestID = "request=download&remoteID=" + params[0];
+            connection.setFixedLengthStreamingMode(requestID.getBytes().length);
+            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream()));
+            writer.write(requestID);
+            writer.flush();
+            writer.close();
+
+            InputStream inputStream = connection.getInputStream();
+            result = (inputStream.read() == '1');
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return result;
     }
 
-    protected void onPostExecute(String taskResult) {
-
+    protected void onPostExecute(Boolean result) {
+        if (result == true) { // Successfully taken ID
+            downloadButton.getBackground().setColorFilter(Color.GREEN, PorterDuff.Mode.MULTIPLY);
+        }
+        else {
+            downloadButton.getBackground().setColorFilter(Color.RED, PorterDuff.Mode.MULTIPLY);
+        }
     }
-
-
 }

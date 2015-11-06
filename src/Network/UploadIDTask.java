@@ -13,8 +13,9 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 import jemboy.navitwo.Main.MainActivity;
+import jemboy.navitwo.Utility.Constants;
 
-public class UploadIDTask extends AsyncTask<String, Void, String> {
+public class UploadIDTask extends AsyncTask<String, Void, Boolean> {
     MainActivity mActivity;
     String serverIP;
     Button uploadButton;
@@ -25,8 +26,8 @@ public class UploadIDTask extends AsyncTask<String, Void, String> {
         this.uploadButton = uploadButton;
     }
 
-    protected String doInBackground(String... params) {
-        String taskResult = "Fail";
+    protected Boolean doInBackground(String... params) {
+        boolean result = false;
         try {
             URL url = new URL(serverIP);
             HttpURLConnection connection = (HttpURLConnection)url.openConnection();
@@ -35,7 +36,7 @@ public class UploadIDTask extends AsyncTask<String, Void, String> {
             connection.setRequestMethod("POST");
             connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
 
-            String requestID = "request=upload&localID=" + params[0] + "&pastID=" + params[1];
+            String requestID = "request=upload&localID=" + params[0];
             connection.setFixedLengthStreamingMode(requestID.getBytes().length);
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream()));
             writer.write(requestID);
@@ -43,22 +44,20 @@ public class UploadIDTask extends AsyncTask<String, Void, String> {
             writer.close();
 
             InputStream inputStream = connection.getInputStream();
-            StringBuffer stringBuffer = new StringBuffer();
-            for (int character; (character = inputStream.read()) != -1;)
-                stringBuffer.append((char)character);
-            inputStream.close();
-            taskResult = stringBuffer.toString();
+            result = (inputStream.read() == '1');
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return taskResult;
+        return result;
     }
 
-    protected void onPostExecute(String taskResult) {
-        if (taskResult.equals("Success")) { // Successfully taken ID
-            mActivity.setPastID();
+    protected void onPostExecute(Boolean result) {
+        if (result == true) { // Successfully taken ID
+            mActivity.setPastLocalID(mActivity.getLocalID());
             uploadButton.getBackground().setColorFilter(Color.GREEN, PorterDuff.Mode.MULTIPLY);
-        } else if (taskResult.equals("Fail")) {
+        }
+        else {
+            mActivity.setPastLocalID("");
             uploadButton.getBackground().setColorFilter(Color.RED, PorterDuff.Mode.MULTIPLY);
         }
     }

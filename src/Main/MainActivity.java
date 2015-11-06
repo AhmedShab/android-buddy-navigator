@@ -2,16 +2,15 @@ package jemboy.navitwo.Main;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.net.Network;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageView;
-import android.widget.TextView;
 
 import jemboy.navitwo.GPSUtility.GPSReceiver;
+import jemboy.navitwo.Network.DeleteIDTask;
 import jemboy.navitwo.Network.DownloadIDTask;
 import jemboy.navitwo.Network.UploadIDTask;
 import jemboy.navitwo.R;
@@ -19,10 +18,10 @@ import jemboy.navitwo.Utility.Constants;
 
 public class MainActivity extends Activity {
     private Button uploadButton, downloadButton;
-    private EditText localID, remoteID;
+    private EditText uploadID, downloadID;
     private Intent gpsIntent, compassIntent;
     private GPSReceiver gpsReceiver;
-    private String pastID = "";
+    private String localID = "", remoteID = "", pastLocalID;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,27 +29,38 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
 
         uploadButton = (Button)findViewById(R.id.upload_button);
+        uploadButton.getBackground().setColorFilter(Color.YELLOW, PorterDuff.Mode.MULTIPLY);
         downloadButton = (Button)findViewById(R.id.download_button);
+        downloadButton.getBackground().setColorFilter(Color.YELLOW, PorterDuff.Mode.MULTIPLY);
 
-        localID = (EditText)findViewById(R.id.local_identification);
-        remoteID = (EditText)findViewById(R.id.remote_identification);
+        uploadID = (EditText)findViewById(R.id.local_identification);
+        downloadID = (EditText)findViewById(R.id.remote_identification);
 
         uploadButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String newID = localID.getText().toString();
-                if (pastID.equals(newID) == false && newID.equals("") == false)
+                localID = uploadID.getText().toString();
+                if (localID.equals("") == true) {
+                    new DeleteIDTask(Constants.serverIP)
+                            .execute(pastLocalID);
+                    uploadButton.getBackground().setColorFilter(Color.YELLOW, PorterDuff.Mode.MULTIPLY);
+                }
+                else if (localID.equals(pastLocalID) == false) {
                     new UploadIDTask(MainActivity.this, Constants.serverIP, uploadButton)
-                            .execute(newID, pastID);
+                            .execute(localID);
+                }
             }
         });
 
         downloadButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String newID = remoteID.getText().toString();
-                new DownloadIDTask(Constants.serverIP, downloadButton)
-                        .execute(newID);
+                remoteID = downloadID.getText().toString();
+                if (remoteID.equals("") == true)
+                    downloadButton.getBackground().setColorFilter(Color.YELLOW, PorterDuff.Mode.MULTIPLY);
+                else
+                    new DownloadIDTask(MainActivity.this, Constants.serverIP, downloadButton)
+                            .execute(remoteID);
             }
         });
 
@@ -62,8 +72,12 @@ public class MainActivity extends Activity {
         */
     }
 
-    public void setPastID() {
-        pastID = localID.getText().toString();
+    public void setPastLocalID(String pastLocalID) {
+        this.pastLocalID = pastLocalID;
+    }
+
+    public String getLocalID() {
+        return localID;
     }
 
     @Override
