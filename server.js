@@ -10,12 +10,11 @@ var server = http.createServer(function (request, response) {
 	request.on("data", function (data) {
 		post = querystring.parse(data.toString());
 		var request = post["request"];
-
+		
 		if (request == "upload") {
 			var localID = post["localID"], pastID = post["pastID"];
 			uploadFunction(response, localID, pastID);
 		}
-
 
 		if (request == "download") {
 			var remoteID = post["remoteID"];
@@ -24,11 +23,10 @@ var server = http.createServer(function (request, response) {
 
 		if (request == "delete") {
 			var targetID = post["targetID"];
-			deleteFunction(response, targetID);
+			deleteFunction(targetID);
 		}
 		console.log(userIDs);
 	});
-	
 });
 
 server.listen(PORT, function () {
@@ -37,26 +35,27 @@ server.listen(PORT, function () {
 
 var uploadFunction = function (response, localID, pastID) {
 	if (userIDs.indexOf(localID) > -1) {
-		response.end("Fail");
+		response.end("0");
 	}
 	else {
+		var pastID = post["pastID"];
 		if (userIDs.indexOf(pastID) > -1)
 			userIDs.splice(userIDs.indexOf(pastID), 1);
 		userIDs.push(localID);
-		response.end("Success");
+		response.end("1");
 	}
 };
 
 var downloadFunction = function (response, remoteID) {
 	if (userIDs.indexOf(remoteID) > -1) {
-		response.end("Success");
+		response.end("1");
 	}
 	else {
-		response.end("Fail");
+		response.end("0");
 	}
 };
 
-var deleteFunction = function (response, targetID) {
+var deleteFunction = function (targetID) {
 	if (userIDs.indexOf(targetID) > -1)
 		userIDs.splice(userIDs.indexOf(targetID), 1);
 };
