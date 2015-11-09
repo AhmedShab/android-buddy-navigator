@@ -55,6 +55,7 @@ public class DownloadIDTask extends AsyncTask<String, Void, Boolean> {
             downloadButton.getBackground().setColorFilter(Color.GREEN, PorterDuff.Mode.MULTIPLY);
         }
         else {
+            mActivity.setRemoteID("");
             downloadButton.getBackground().setColorFilter(Color.RED, PorterDuff.Mode.MULTIPLY);
         }
     }

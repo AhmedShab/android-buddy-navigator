@@ -53,7 +53,10 @@ public class UploadIDTask extends AsyncTask<String, Void, Boolean> {
 
     protected void onPostExecute(Boolean result) {
         if (result == true) { // Successfully taken ID
+            new DeleteIDTask(Constants.serverIP)
+                    .execute(mActivity.getPastLocalID());
             mActivity.setPastLocalID(mActivity.getLocalID());
+            uploadButton.setSelected(true);
             uploadButton.getBackground().setColorFilter(Color.GREEN, PorterDuff.Mode.MULTIPLY);
         }
         else {
