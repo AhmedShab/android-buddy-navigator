@@ -2,29 +2,41 @@ var http = require("http");
 var querystring = require("querystring");
 
 const PORT = 8080;
-var userIDs = ["Jemboy"];
+var userIDs = 	[
+					{"username" : "Jemboy", "latitude" : 0.0, "longitude" : 0.0},
+					{"username" : "Obama", "latitude" : 10.0, "longitude" : 10.0}
+				];
 
 var server = http.createServer(function (request, response) {
 	response.writeHead(200, "Header", {"Content-Type": "application/x-www-form-urlencoded"});
 
 	request.on("data", function (data) {
-		post = querystring.parse(data.toString());
+		var post = querystring.parse(data.toString());
 		var request = post["request"];
 		
-		if (request == "upload") {
-			var localID = post["localID"], pastID = post["pastID"];
-			uploadFunction(response, localID, pastID);
+		if (request == "uploadID") {
+			var localID = post["localID"];
+			uploadFunction(response, localID);
 		}
 
-		if (request == "download") {
+		if (request == "downloadID") {
 			var remoteID = post["remoteID"];
 			downloadFunction(response, remoteID);
 		}
 
-		if (request == "delete") {
+		if (request == "deleteID") {
 			var targetID = post["targetID"];
 			deleteFunction(targetID);
 		}
+
+		if (request == "uploadCoord") {
+			
+		}
+
+		if (request == "downloadCoord") {
+
+		}
+
 		console.log(userIDs);
 	});
 });
@@ -33,37 +45,42 @@ server.listen(PORT, function () {
 	console.log("Server listening at: http://localhost:" + PORT);
 });
 
-var uploadFunction = function (response, localID, pastID) {
-	if (userIDs.indexOf(localID) > -1) {
-		response.end("0");
+var uploadFunction = function (response, localID) {
+	var success = true;
+	for (var i = 0; i < userIDs.length; i++) {
+		if (userIDs[i].username == localID) {
+			success = false;
+			response.end("0");
+			break;			
+		}
 	}
-	else {
-		var pastID = post["pastID"];
-		if (userIDs.indexOf(pastID) > -1)
-			userIDs.splice(userIDs.indexOf(pastID), 1);
-		userIDs.push(localID);
+	if (success == true) {
+		var jsonObject = new Object();
+		jsonObject["username"] = localID;
+		jsonObject["latitude"] = 0.0;
+		jsonObject["longitude"] = 0.0;
+		userIDs.push(jsonObject);
 		response.end("1");
 	}
 };
 
 var downloadFunction = function (response, remoteID) {
-	if (userIDs.indexOf(remoteID) > -1) {
-		response.end("1");
+	var success = false;
+	for (var i = 0; i < userIDs.length; i++) {
+		if (userIDs[i].username == remoteID) {
+			success = true;
+			response.end("1");
+			break;
+		}
 	}
-	else {
+	if (success == false) {
 		response.end("0");
 	}
 };
 
 var deleteFunction = function (targetID) {
-	if (userIDs.indexOf(targetID) > -1)
-		userIDs.splice(userIDs.indexOf(targetID), 1);
+	for (var i = 0; i < userIDs.length; i++) {
+		if (userIDs[i].username == targetID)
+			userIDs.splice(i, 1);
+	}
 };
-
-/*
-var jsonString = '[]';
-var jsonArray = JSON.parse(jsonString);
-jsonArray.push({"userId" : request["userId"], "latitude" : request["latitude"], "longitude" : request["longitude"]});
-var jsonObject = {"latitude" : 40.891662, "longitude" : 29.378559};
-response.end(JSON.stringify(jsonObject));
-*/
