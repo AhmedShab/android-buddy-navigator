@@ -17,11 +17,12 @@ import jemboy.navitwo.Utility.Constants;
 
 public class MainActivity extends Activity {
     private Button uploadButton, downloadButton;
-    private EditText uploadID, downloadID;
+    private EditText uploadID;
+    private EditText downloadID;
     private Intent gpsIntent, compassIntent;
     private GPSReceiver gpsReceiver;
-
     private String localID = "", remoteID = "", pastLocalID, pastRemoteID;
+    private boolean isNetworkBusy = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,10 +45,17 @@ public class MainActivity extends Activity {
         uploadButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                localID = uploadID.getText().toString();
-                if (localID.equals(pastLocalID) == false && localID.equals("") == false) {
-                    new UploadIDTask(MainActivity.this, Constants.serverIP, uploadButton)
-                            .execute(localID);
+                if (isNetworkBusy == false) {
+                    isNetworkBusy = true;
+                    uploadID.setEnabled(false);
+                    localID = uploadID.getText().toString();
+                    if (localID.equals(pastLocalID) == false && localID.equals("") == false)
+                        new UploadIDTask(MainActivity.this, Constants.serverIP, uploadButton)
+                                .execute(localID);
+                    else {
+                        uploadID.setEnabled(true);
+                        isNetworkBusy = false;
+                    }
                 }
             }
         });
@@ -55,12 +63,20 @@ public class MainActivity extends Activity {
         downloadButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                pastRemoteID = remoteID;
-                remoteID = downloadID.getText().toString();
-                if (remoteID.equals(pastLocalID) == false && remoteID.equals("") == false
-                        && remoteID.equals(pastRemoteID) == false)
-                    new DownloadIDTask(MainActivity.this, Constants.serverIP, downloadButton)
-                            .execute(remoteID);
+                if (isNetworkBusy == false) {
+                    isNetworkBusy = true;
+                    downloadID.setEnabled(false);
+                    pastRemoteID = remoteID;
+                    remoteID = downloadID.getText().toString();
+                    if (remoteID.equals(pastLocalID) == false && remoteID.equals("") == false
+                            && remoteID.equals(pastRemoteID) == false)
+                        new DownloadIDTask(MainActivity.this, Constants.serverIP, downloadButton)
+                                .execute(remoteID);
+                    else {
+                        downloadID.setEnabled(true);
+                        isNetworkBusy = false;
+                    }
+                }
             }
         });
 
@@ -86,6 +102,18 @@ public class MainActivity extends Activity {
 
     public String getLocalID() {
         return localID;
+    }
+
+    public EditText getDownloadID() {
+        return downloadID;
+    }
+
+    public EditText getUploadID() {
+        return uploadID;
+    }
+
+    public void setNetworkBusy(boolean isNetworkBusy) {
+        this.isNetworkBusy = isNetworkBusy;
     }
 
     @Override

@@ -30,12 +30,12 @@ public class DownloadIDTask extends AsyncTask<String, Void, Boolean> {
         try {
             URL url = new URL(serverIP);
             HttpURLConnection connection = (HttpURLConnection)url.openConnection();
-            connection.setConnectTimeout(5000);
-            connection.setReadTimeout(5000);
+            connection.setConnectTimeout(3000);
+            connection.setReadTimeout(3000);
             connection.setRequestMethod("POST");
             connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
 
-            String requestID = "request=download&remoteID=" + params[0];
+            String requestID = "request=downloadID&remoteID=" + params[0];
             connection.setFixedLengthStreamingMode(requestID.getBytes().length);
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream()));
             writer.write(requestID);
@@ -58,5 +58,7 @@ public class DownloadIDTask extends AsyncTask<String, Void, Boolean> {
             mActivity.setRemoteID("");
             downloadButton.getBackground().setColorFilter(Color.RED, PorterDuff.Mode.MULTIPLY);
         }
+        mActivity.getDownloadID().setEnabled(true);
+        mActivity.setNetworkBusy(false);
     }
 }

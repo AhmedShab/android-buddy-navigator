@@ -31,12 +31,12 @@ public class UploadIDTask extends AsyncTask<String, Void, Boolean> {
         try {
             URL url = new URL(serverIP);
             HttpURLConnection connection = (HttpURLConnection)url.openConnection();
-            connection.setConnectTimeout(5000);
-            connection.setReadTimeout(5000);
+            connection.setConnectTimeout(3000);
+            connection.setReadTimeout(3000);
             connection.setRequestMethod("POST");
             connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
 
-            String requestID = "request=upload&localID=" + params[0];
+            String requestID = "request=uploadID&localID=" + params[0];
             connection.setFixedLengthStreamingMode(requestID.getBytes().length);
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream()));
             writer.write(requestID);
@@ -63,5 +63,7 @@ public class UploadIDTask extends AsyncTask<String, Void, Boolean> {
             mActivity.setPastLocalID("");
             uploadButton.getBackground().setColorFilter(Color.RED, PorterDuff.Mode.MULTIPLY);
         }
+        mActivity.getUploadID().setEnabled(true);
+        mActivity.setNetworkBusy(false);
     }
 }

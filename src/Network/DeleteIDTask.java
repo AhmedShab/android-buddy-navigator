@@ -23,7 +23,7 @@ public class DeleteIDTask extends AsyncTask<String, Void, Void> {
             connection.setRequestMethod("POST");
             connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
 
-            String requestID = "request=delete&targetID=" + params[0];
+            String requestID = "request=deleteID&targetID=" + params[0];
             connection.setFixedLengthStreamingMode(requestID.getBytes().length);
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream()));
             writer.write(requestID);
