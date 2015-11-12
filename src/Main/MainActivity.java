@@ -2,18 +2,20 @@ package jemboy.navitwo.Main;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+
+import jemboy.navitwo.GPSUtility.CompassTracker;
 import jemboy.navitwo.GPSUtility.GPSReceiver;
+import jemboy.navitwo.GPSUtility.GPSTracker;
 import jemboy.navitwo.Network.DownloadIDTask;
 import jemboy.navitwo.Network.UploadIDTask;
 import jemboy.navitwo.R;
-import jemboy.navitwo.Utility.Constants;
 
 public class MainActivity extends Activity implements OnTaskCompleted {
     private Button uploadButton, downloadButton;
@@ -46,15 +48,12 @@ public class MainActivity extends Activity implements OnTaskCompleted {
             @Override
             public void onClick(View v) {
                 if (isNetworkBusy == false) {
-                    isNetworkBusy = true;
-                    uploadID.setEnabled(false);
                     localID = uploadID.getText().toString();
-                    if (localID.equals(pastLocalID) == false && localID.equals("") == false)
-                        new UploadIDTask(MainActivity.this, Constants.serverIP, uploadButton)
+                    if (localID.equals(pastLocalID) == false && localID.equals("") == false) {
+                        isNetworkBusy = true;
+                        uploadID.setEnabled(false);
+                        new UploadIDTask(MainActivity.this)
                                 .execute(localID);
-                    else {
-                        uploadID.setEnabled(true);
-                        isNetworkBusy = false;
                     }
                 }
             }
@@ -64,28 +63,22 @@ public class MainActivity extends Activity implements OnTaskCompleted {
             @Override
             public void onClick(View v) {
                 if (isNetworkBusy == false) {
-                    isNetworkBusy = true;
-                    downloadID.setEnabled(false);
                     pastRemoteID = remoteID;
                     remoteID = downloadID.getText().toString();
                     if (remoteID.equals(pastLocalID) == false && remoteID.equals("") == false
-                            && remoteID.equals(pastRemoteID) == false)
-                        new DownloadIDTask(MainActivity.this, Constants.serverIP, downloadButton)
+                            && remoteID.equals(pastRemoteID) == false) {
+                        isNetworkBusy = true;
+                        downloadID.setEnabled(false);
+                        new DownloadIDTask(MainActivity.this)
                                 .execute(remoteID);
-                    else {
-                        downloadID.setEnabled(true);
-                        isNetworkBusy = false;
                     }
                 }
             }
         });
 
-        /*
-        Ultimate ultimate = new Ultimate((ImageView)findViewById(R.id.imageView));
+        gpsReceiver = new GPSReceiver();
         gpsIntent = new Intent(this, GPSTracker.class);
-        compassIntent = new Intent(this, CompassTracker.class);
-        gpsReceiver = new GPSReceiver(ultimate);
-        */
+        // compassIntent = new Intent(this, CompassTracker.class);
     }
 
     @Override
@@ -141,61 +134,19 @@ public class MainActivity extends Activity implements OnTaskCompleted {
         startService(compassIntent);
     }
 
-    public void setPastLocalID(String pastLocalID) {
-        this.pastLocalID = pastLocalID;
-    }
-
-    public String getPastLocalID() {
-        return pastLocalID;
-    }
-
-    public void setRemoteID(String remoteID) {
-        this.remoteID = remoteID;
-    }
-
-    public String getLocalID() {
-        return localID;
-    }
-
-    public EditText getDownloadID() {
-        return downloadID;
-    }
-
-    public EditText getUploadID() {
-        return uploadID;
-    }
-
-    public void setNetworkBusy(boolean isNetworkBusy) {
-        this.isNetworkBusy = isNetworkBusy;
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        /*
-        registerReceiver(gpsReceiver, new IntentFilter("jemboy.navitwo.location"));
-        startService(gpsIntent);
-        startService(compassIntent);
-        */
-    }
-
     @Override
     public void onPause() {
         super.onPause();
-        /*
         unregisterReceiver(gpsReceiver);
         stopService(gpsIntent);
         stopService(compassIntent);
-        */
     }
 
     @Override
     public void onStop() {
         super.onStop();
-        /*
         unregisterReceiver(gpsReceiver);
         stopService(gpsIntent);
         stopService(compassIntent);
-        */
     }
 }
