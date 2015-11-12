@@ -60,7 +60,7 @@ var uploadFunction = function (response, localID) {
 	for (var i = 0; i < userIDs.length; i++) {
 		if (userIDs[i].username == localID) {
 			success = false;
-			response.end("0");
+			response.end("Fail");
 			break;			
 		}
 	}
@@ -70,7 +70,7 @@ var uploadFunction = function (response, localID) {
 		jsonObject["latitude"] = 0.0;
 		jsonObject["longitude"] = 0.0;
 		userIDs.push(jsonObject);
-		response.end("1");
+		response.end("Success");
 	}
 };
 
@@ -80,12 +80,12 @@ var downloadFunction = function (response, remoteID) {
 	for (var i = 0; i < userIDs.length; i++) {
 		if (userIDs[i].username == remoteID) {
 			success = true;
-			response.end("1");
+			response.end("Success");
 			break;
 		}
 	}
 	if (success == false) {
-		response.end("0");
+		response.end("Fail");
 	}
 };
 
