@@ -1,35 +1,26 @@
 package jemboy.navitwo.Network;
 
-import android.app.Activity;
-import android.content.Context;
-import android.graphics.Color;
-import android.graphics.PorterDuff;
 import android.os.AsyncTask;
-import android.widget.Button;
 import java.io.BufferedWriter;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
-
 import jemboy.navitwo.Main.MainActivity;
+import jemboy.navitwo.Main.OnTaskCompleted;
 import jemboy.navitwo.Utility.Constants;
 
-public class UploadIDTask extends AsyncTask<String, Void, Boolean> {
-    MainActivity mActivity;
-    String serverIP;
-    Button uploadButton;
+public class UploadIDTask extends AsyncTask<String, Void, String> {
+    private OnTaskCompleted taskCompleted;
 
-    public UploadIDTask(MainActivity mActivity, String serverIP, Button uploadButton) {
-        this.mActivity = mActivity;
-        this.serverIP = serverIP;
-        this.uploadButton = uploadButton;
+    public UploadIDTask(MainActivity mActivity) {
+        this.taskCompleted = mActivity;
     }
 
-    protected Boolean doInBackground(String... params) {
-        boolean result = false;
+    protected String doInBackground(String... params) {
+        String result = "";
         try {
-            URL url = new URL(serverIP);
+            URL url = new URL(Constants.serverIP);
             HttpURLConnection connection = (HttpURLConnection)url.openConnection();
             connection.setConnectTimeout(3000);
             connection.setReadTimeout(3000);
@@ -44,26 +35,21 @@ public class UploadIDTask extends AsyncTask<String, Void, Boolean> {
             writer.close();
 
             InputStream inputStream = connection.getInputStream();
-            result = (inputStream.read() == '1');
+            StringBuffer stringBuffer = new StringBuffer();
+            int character;
+            while ((character = inputStream.read()) != -1) {
+                stringBuffer.append((char)character);
+            }
+            inputStream.close();
+            result = stringBuffer.toString();
         } catch (Exception e) {
+            result = "Exception";
             e.printStackTrace();
         }
         return result;
     }
 
-    protected void onPostExecute(Boolean result) {
-        if (result == true) { // Successfully taken ID
-            new DeleteIDTask(Constants.serverIP)
-                    .execute(mActivity.getPastLocalID());
-            mActivity.setPastLocalID(mActivity.getLocalID());
-            uploadButton.setSelected(true);
-            uploadButton.getBackground().setColorFilter(Color.GREEN, PorterDuff.Mode.MULTIPLY);
-        }
-        else {
-            mActivity.setPastLocalID("");
-            uploadButton.getBackground().setColorFilter(Color.RED, PorterDuff.Mode.MULTIPLY);
-        }
-        mActivity.getUploadID().setEnabled(true);
-        mActivity.setNetworkBusy(false);
+    protected void onPostExecute(String result) {
+        taskCompleted.onUploadIDCompleted(result);
     }
 }
