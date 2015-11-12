@@ -15,7 +15,7 @@ import jemboy.navitwo.Network.UploadIDTask;
 import jemboy.navitwo.R;
 import jemboy.navitwo.Utility.Constants;
 
-public class MainActivity extends Activity {
+public class MainActivity extends Activity implements OnTaskCompleted {
     private Button uploadButton, downloadButton;
     private EditText uploadID;
     private EditText downloadID;
@@ -86,6 +86,59 @@ public class MainActivity extends Activity {
         compassIntent = new Intent(this, CompassTracker.class);
         gpsReceiver = new GPSReceiver(ultimate);
         */
+    }
+
+    @Override
+    public void onUploadIDCompleted(String result) {
+        if (result.equals("Success")) {
+            pastLocalID = localID;
+            uploadButton.setSelected(true);
+            uploadButton.getBackground().setColorFilter(Color.GREEN, PorterDuff.Mode.MULTIPLY);
+            startService(gpsIntent);
+        }
+
+        else if (result.equals("Fail")) {
+            pastLocalID = "";
+            uploadID.setError("Username already taken.");
+            uploadButton.getBackground().setColorFilter(Color.RED, PorterDuff.Mode.MULTIPLY);
+        }
+
+        else if (result.equals("Exception")) {
+            pastLocalID = "";
+            uploadID.setError("Oops, something went wrong. Please try again.");
+            uploadButton.getBackground().setColorFilter(Color.RED, PorterDuff.Mode.MULTIPLY);
+        }
+        uploadID.setEnabled(true);
+        isNetworkBusy = false;
+    }
+
+    @Override
+    public void onDownloadIDCompleted(String result) {
+        if (result.equals("Success")) {
+            downloadButton.getBackground().setColorFilter(Color.GREEN, PorterDuff.Mode.MULTIPLY);
+        }
+
+        if (result.equals("Fail")) {
+            remoteID = "";
+            downloadID.setError("There is no such username.");
+            downloadButton.getBackground().setColorFilter(Color.RED, PorterDuff.Mode.MULTIPLY);
+        }
+
+        if (result.equals("Exception")) {
+            remoteID = "";
+            downloadID.setError("Oops, something went wrong. Please try again.");
+            downloadButton.getBackground().setColorFilter(Color.RED, PorterDuff.Mode.MULTIPLY);
+        }
+        downloadID.setEnabled(true);
+        isNetworkBusy = false;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        registerReceiver(gpsReceiver, new IntentFilter("jemboy.navitwo.location"));
+        startService(gpsIntent);
+        startService(compassIntent);
     }
 
     public void setPastLocalID(String pastLocalID) {
