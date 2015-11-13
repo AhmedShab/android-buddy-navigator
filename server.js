@@ -57,14 +57,13 @@ server.listen(PORT, function () {
 var uploadFunction = function (response, localID) {
 	/* Check if ID exists.. if it doesn't then push it to userIDs */
 	var success = true;
-	for (var i = 0; i < userIDs.length; i++) {
+	for (var i = 0; i < userIDs.length && success; i++) {
 		if (userIDs[i].username == localID) {
 			success = false;
 			response.end("Fail");
-			break;			
 		}
 	}
-	if (success == true) {
+	if (success) {
 		var jsonObject = new Object();
 		jsonObject["username"] = localID;
 		jsonObject["latitude"] = 0.0;
@@ -77,11 +76,10 @@ var uploadFunction = function (response, localID) {
 var downloadFunction = function (response, remoteID) {
 	/* Check if ID exists.. if it does then it is a successful remote ID acquisition */
 	var success = false;
-	for (var i = 0; i < userIDs.length; i++) {
+	for (var i = 0; i < userIDs.length && !success; i++) {
 		if (userIDs[i].username == remoteID) {
 			success = true;
 			response.end("Success");
-			break;
 		}
 	}
 	if (success == false) {
@@ -98,24 +96,43 @@ var deleteFunction = function (targetID) {
 
 var uploadCoord = function (localID, latitude, longitude) {
 	/* Updates coordinates for the given ID */
-	for (var i = 0; i < userIDs.length; i++) {
+	var updated = false;
+	for (var i = 0; i < userIDs.length && !updated; i++) {
 		if (userIDs[i].username == localID) {
 			userIDs[i].latitude = latitude;
 			userIDs[i].longitude = longitude;
-			break;
+			updated = true;
 		}
 	}
 };
 
 var downloadCoord = function (response, remoteID) {
 	/* Get the coordinates of the given ID and send it to the client through a JSON string */
-	for (var i = 0; i < userIDs.length; i++) {
+	var found = false;
+	for (var i = 0; i < userIDs.length && !found; i++) {
 		if (userIDs[i].username = remoteID) {
 			var jsonObject = new Object();
 			jsonObject["latitude"] = userIDs[i].latitude;
 			jsonObject["longitude"] = userIDs[i].longitude;
 			response.end(JSON.stringify(jsonObject));
-			break;
+			found = true;
 		}
 	}
 };
+
+/*
+var downloadCoord = function (response, remoteID) {
+	/* Get the coordinates of the given ID and send it to the client through a JSON string 
+	//for (var i = 0; i < userIDs.length; i++) {
+	var found = False;
+	for (var i = 0; i < userIDs.length && !found; i++) { // It reads like english: "If i is less than the length and I haven't found the ID..."
+		if (userIDs[i].username = remoteID) {
+			var jsonObject = new Object();
+			jsonObject["latitude"] = userIDs[i].latitude;
+			jsonObject["longitude"] = userIDs[i].longitude;
+			response.end(JSON.stringify(jsonObject));
+			found = True;
+		}
+	}
+};
+*/
