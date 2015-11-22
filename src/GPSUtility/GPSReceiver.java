@@ -9,11 +9,14 @@ import android.util.Log;
 import jemboy.navitwo.Network.UploadCoordinatesTask;
 
 public class GPSReceiver extends BroadcastReceiver {
+    private String localID = "";
     private float latitude, longitude, degree;
     private boolean isLocked = false;
 
-    public GPSReceiver() {
+    public GPSReceiver() {}
 
+    public void setLocalID(String localID) {
+        this.localID = localID;
     }
 
     @Override
@@ -24,7 +27,7 @@ public class GPSReceiver extends BroadcastReceiver {
             if (bundle.getString("action").equals("GPSInfo")) {
                 latitude = bundle.getFloat("latitude");
                 longitude = bundle.getFloat("longitude");
-                Log.d("Tag: ", latitude + " " + longitude);
+                new UploadCoordinatesTask(localID).execute(latitude, longitude);
             }
             else if (bundle.getString("action").equals("CompassInfo")) {
                 degree = bundle.getFloat("degree");

@@ -91,6 +91,7 @@ public class MainActivity extends Activity implements OnTaskCompleted {
             pastLocalID = localID;
             uploadButton.setSelected(true);
             uploadButton.getBackground().setColorFilter(Color.GREEN, PorterDuff.Mode.MULTIPLY);
+            gpsReceiver.setLocalID(localID);
             startServices();
         }
 
