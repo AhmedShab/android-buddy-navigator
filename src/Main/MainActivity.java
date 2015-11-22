@@ -2,6 +2,7 @@ package jemboy.navitwo.Main;
 
 import android.app.Activity;
 import android.app.ActivityManager;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -11,12 +12,12 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import jemboy.navitwo.GPSUtility.CompassTracker;
-import jemboy.navitwo.GPSUtility.DummyService;
-import jemboy.navitwo.GPSUtility.GPSReceiver;
-import jemboy.navitwo.GPSUtility.GPSTracker;
+import jemboy.navitwo.Service.CompassTracker;
+import jemboy.navitwo.Service.DummyService;
+import jemboy.navitwo.Service.GPSTracker;
 import jemboy.navitwo.Network.DeleteIDTask;
 import jemboy.navitwo.Network.DownloadIDTask;
+import jemboy.navitwo.Network.UploadCoordinatesTask;
 import jemboy.navitwo.Network.UploadIDTask;
 import jemboy.navitwo.R;
 import jemboy.navitwo.Utility.Constants;
@@ -26,7 +27,7 @@ public class MainActivity extends Activity implements OnTaskCompleted {
     private EditText uploadID;
     private EditText downloadID;
     private Intent gpsIntent, compassIntent, dummyIntent;
-    private GPSReceiver gpsReceiver;
+    private BroadcastReceiver broadcastReceiver;
     private String localID = "", remoteID = "", pastLocalID = "", pastRemoteID = "";
     private boolean isNetworkBusy = false, wereServicesRunning = false;
 
@@ -77,9 +78,27 @@ public class MainActivity extends Activity implements OnTaskCompleted {
             }
         });
 
-        gpsReceiver = new GPSReceiver();
-        registerReceiver(gpsReceiver, new IntentFilter("jemboy.navitwo.location"));
-
+        broadcastReceiver = new BroadcastReceiver() {
+            private float latitude = 0, longitude = 0, degree = 0;
+            private boolean isLocked = false;
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if (!isLocked) {
+                    isLocked = true;
+                    Bundle bundle = intent.getExtras();
+                    if (bundle.getString("action").equals("GPSInfo")) {
+                        latitude = bundle.getFloat("latitude");
+                        longitude = bundle.getFloat("longitude");
+                        new UploadCoordinatesTask(localID).execute(latitude, longitude);
+                    }
+                    else if (bundle.getString("action").equals("CompassInfo")) {
+                        degree = bundle.getFloat("degree");
+                    }
+                    // Rotate shite
+                    isLocked = false;
+                }
+            }
+        };
         gpsIntent = new Intent(this, GPSTracker.class);
         compassIntent = new Intent(this, CompassTracker.class);
         dummyIntent = new Intent(this, DummyService.class);
@@ -91,7 +110,6 @@ public class MainActivity extends Activity implements OnTaskCompleted {
             pastLocalID = localID;
             uploadButton.setSelected(true);
             uploadButton.getBackground().setColorFilter(Color.GREEN, PorterDuff.Mode.MULTIPLY);
-            gpsReceiver.setLocalID(localID);
             startServices();
         }
 
@@ -152,7 +170,7 @@ public class MainActivity extends Activity implements OnTaskCompleted {
     }
 
     public void startServices() {
-        registerReceiver(gpsReceiver, new IntentFilter(Constants.RECEIVER));
+        registerReceiver(broadcastReceiver, new IntentFilter(Constants.RECEIVER));
         /*
         startService(gpsIntent);
         startService(compassIntent);
@@ -162,7 +180,7 @@ public class MainActivity extends Activity implements OnTaskCompleted {
 
     public boolean stopServices() {
         if (isMyServiceRunning(DummyService.class)) {
-            unregisterReceiver(gpsReceiver);
+            unregisterReceiver(broadcastReceiver);
             /*
             stopService(gpsIntent);
             stopService(compassIntent);
