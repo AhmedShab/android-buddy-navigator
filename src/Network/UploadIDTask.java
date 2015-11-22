@@ -20,7 +20,7 @@ public class UploadIDTask extends AsyncTask<String, Void, String> {
     protected String doInBackground(String... params) {
         String result = "";
         try {
-            URL url = new URL(Constants.serverIP);
+            URL url = new URL(Constants.SERVER);
             HttpURLConnection connection = (HttpURLConnection)url.openConnection();
             connection.setConnectTimeout(3000);
             connection.setReadTimeout(3000);
