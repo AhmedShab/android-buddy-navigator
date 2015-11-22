@@ -15,9 +15,11 @@ import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListe
 import java.util.Timer;
 import java.util.TimerTask;
 
+import jemboy.navitwo.Utility.Constants;
+
 public class GPSTracker extends Service
         implements ConnectionCallbacks, OnConnectionFailedListener {
-    public static final long TIME_INTERVAL = 4 * 1000; // 4 Seconds
+    public static final long TIME_INTERVAL = 4 * 1000;
 
     private Handler mHandler = new Handler();
     private Timer mTimer = null;
@@ -77,7 +79,7 @@ public class GPSTracker extends Service
                         mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
                         if (mLastLocation != null) {
                             Intent intent = new Intent();
-                            intent.setAction("jemboy.navitwo.location");
+                            intent.setAction(Constants.RECEIVER);
                             intent.putExtra("action", "GPSInfo");
                             intent.putExtra("latitude", (float)mLastLocation.getLatitude());
                             intent.putExtra("longitude", (float)mLastLocation.getLongitude());

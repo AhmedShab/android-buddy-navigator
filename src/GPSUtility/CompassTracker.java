@@ -9,6 +9,8 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.IBinder;
 
+import jemboy.navitwo.Utility.Constants;
+
 public class CompassTracker extends Service implements SensorEventListener {
     private SensorManager mSensorManager;
     private Sensor mAccelerometer;
@@ -56,7 +58,7 @@ public class CompassTracker extends Service implements SensorEventListener {
                 SensorManager.getOrientation(R, orientation);
                 float degree = -orientation[0] * 360 / (2 * 3.14159f);
                 Intent intent = new Intent();
-                intent.setAction("jemboy.navitwo.location");
+                intent.setAction(Constants.RECEIVER);
                 intent.putExtra("action", "CompassInfo");
                 intent.putExtra("degree", degree);
                 sendBroadcast(intent);
