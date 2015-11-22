@@ -1,0 +1,15 @@
+﻿Removing GPSReceiver from GPSUtility
+
+I have also renamed the package GPSUtility as "Service"
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+# On branch master
+# Your branch is up-to-date with 'origin/master'.
+#
+# Changes to be committed:
+#	deleted:    src/GPSUtility/GPSReceiver.java
+#	renamed:    src/GPSUtility/CompassTracker.java -> src/Service/CompassTracker.java
+#	renamed:    src/GPSUtility/DummyService.java -> src/Service/DummyService.java
+#	renamed:    src/GPSUtility/GPSTracker.java -> src/Service/GPSTracker.java
+#
+

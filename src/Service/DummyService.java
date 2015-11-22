@@ -1,17 +1,10 @@
-package jemboy.navitwo.GPSUtility;
+package jemboy.navitwo.Service;
 
 import android.app.Service;
 import android.content.Intent;
-import android.location.Location;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.location.LocationServices;
-import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.widget.Toast;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient.ConnectionCallbacks;
-import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListener;
 
 import java.util.Random;
 import java.util.Timer;

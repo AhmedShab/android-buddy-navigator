@@ -1,4 +1,4 @@
-package jemboy.navitwo.GPSUtility;
+package jemboy.navitwo.Service;
 
 import android.app.Service;
 import android.content.Intent;
