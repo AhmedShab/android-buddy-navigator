@@ -11,22 +11,24 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-
 import jemboy.navitwo.GPSUtility.CompassTracker;
+import jemboy.navitwo.GPSUtility.DummyService;
 import jemboy.navitwo.GPSUtility.GPSReceiver;
 import jemboy.navitwo.GPSUtility.GPSTracker;
+import jemboy.navitwo.Network.DeleteIDTask;
 import jemboy.navitwo.Network.DownloadIDTask;
 import jemboy.navitwo.Network.UploadIDTask;
 import jemboy.navitwo.R;
+import jemboy.navitwo.Utility.Constants;
 
 public class MainActivity extends Activity implements OnTaskCompleted {
     private Button uploadButton, downloadButton;
     private EditText uploadID;
     private EditText downloadID;
-    private Intent gpsIntent, compassIntent;
+    private Intent gpsIntent, compassIntent, dummyIntent;
     private GPSReceiver gpsReceiver;
-    private String localID = "", remoteID = "", pastLocalID, pastRemoteID;
-    private boolean isNetworkBusy = false;
+    private String localID = "", remoteID = "", pastLocalID = "", pastRemoteID = "";
+    private boolean isNetworkBusy = false, wereServicesRunning = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,9 +44,6 @@ public class MainActivity extends Activity implements OnTaskCompleted {
 
         uploadID = (EditText)findViewById(R.id.local_identification);
         downloadID = (EditText)findViewById(R.id.remote_identification);
-
-        uploadID.addTextChangedListener(new LovelyTextWatcher(uploadButton));
-        downloadID.addTextChangedListener(new LovelyTextWatcher(downloadButton));
 
         uploadButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -79,8 +78,11 @@ public class MainActivity extends Activity implements OnTaskCompleted {
         });
 
         gpsReceiver = new GPSReceiver();
+        registerReceiver(gpsReceiver, new IntentFilter("jemboy.navitwo.location"));
+
         gpsIntent = new Intent(this, GPSTracker.class);
-        // compassIntent = new Intent(this, CompassTracker.class);
+        compassIntent = new Intent(this, CompassTracker.class);
+        dummyIntent = new Intent(this, DummyService.class);
     }
 
     @Override
@@ -89,21 +91,22 @@ public class MainActivity extends Activity implements OnTaskCompleted {
             pastLocalID = localID;
             uploadButton.setSelected(true);
             uploadButton.getBackground().setColorFilter(Color.GREEN, PorterDuff.Mode.MULTIPLY);
-            startService(gpsIntent);
+            startServices();
         }
 
         else if (result.equals("Fail")) {
             pastLocalID = "";
-            uploadID.setError("Username already taken.");
+            uploadID.setEnabled(true);
+            uploadID.setError("Username already taken.", null);
             uploadButton.getBackground().setColorFilter(Color.RED, PorterDuff.Mode.MULTIPLY);
         }
 
         else if (result.equals("Exception")) {
             pastLocalID = "";
-            uploadID.setError("Oops, something went wrong. Please try again.");
+            uploadID.setEnabled(true);
+            uploadID.setError("Oops, something went wrong. Please try again.", null);
             uploadButton.getBackground().setColorFilter(Color.RED, PorterDuff.Mode.MULTIPLY);
         }
-        uploadID.setEnabled(true);
         isNetworkBusy = false;
     }
 
@@ -115,17 +118,58 @@ public class MainActivity extends Activity implements OnTaskCompleted {
 
         if (result.equals("Fail")) {
             remoteID = "";
-            downloadID.setError("There is no such username.");
+            downloadID.setError("There is no such username.", null);
             downloadButton.getBackground().setColorFilter(Color.RED, PorterDuff.Mode.MULTIPLY);
         }
 
         if (result.equals("Exception")) {
             remoteID = "";
-            downloadID.setError("Oops, something went wrong. Please try again.");
+            downloadID.setError("Oops, something went wrong. Please try again.", null);
             downloadButton.getBackground().setColorFilter(Color.RED, PorterDuff.Mode.MULTIPLY);
         }
         downloadID.setEnabled(true);
         isNetworkBusy = false;
+    }
+
+    public void clearUploadID(View v) {
+        if (uploadButton.isSelected()) {
+            uploadButton.setSelected(false);
+            new DeleteIDTask(Constants.SERVER).execute(localID);
+        }
+        uploadID.setEnabled(true);
+        uploadID.setText("");
+        localID = pastLocalID = "";
+        uploadButton.getBackground().setColorFilter(Color.YELLOW, PorterDuff.Mode.MULTIPLY);
+        wereServicesRunning = stopServices();
+    }
+
+    public void clearDownloadID(View v) {
+        downloadID.setEnabled(true);
+        downloadID.setText("");
+        remoteID = pastRemoteID = "";
+        downloadButton.getBackground().setColorFilter(Color.YELLOW, PorterDuff.Mode.MULTIPLY);
+    }
+
+    public void startServices() {
+        registerReceiver(gpsReceiver, new IntentFilter(Constants.RECEIVER));
+        /*
+        startService(gpsIntent);
+        startService(compassIntent);
+        */
+        startService(dummyIntent);
+    }
+
+    public boolean stopServices() {
+        if (isMyServiceRunning(DummyService.class)) {
+            unregisterReceiver(gpsReceiver);
+            /*
+            stopService(gpsIntent);
+            stopService(compassIntent);
+            */
+            stopService(dummyIntent);
+            return true;
+        }
+        return false;
     }
 
     private boolean isMyServiceRunning(Class<?> serviceClass) {
@@ -141,24 +185,13 @@ public class MainActivity extends Activity implements OnTaskCompleted {
     @Override
     public void onResume() {
         super.onResume();
-        registerReceiver(gpsReceiver, new IntentFilter("jemboy.navitwo.location"));
-        startService(gpsIntent);
-        startService(compassIntent);
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        unregisterReceiver(gpsReceiver);
-        stopService(gpsIntent);
-        stopService(compassIntent);
+        if (wereServicesRunning)
+            startServices();
     }
 
     @Override
     public void onStop() {
         super.onStop();
-        unregisterReceiver(gpsReceiver);
-        stopService(gpsIntent);
-        stopService(compassIntent);
+        wereServicesRunning = stopServices();
     }
 }
