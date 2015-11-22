@@ -38,7 +38,7 @@ var server = http.createServer(function (request, response) {
 		/* request=uploadCoord&localID=\somevariable\&latitude=\somevariable\&longitude=\somevariable\ */
 		if (request == "uploadCoord") {
 			var localID = post["localID"], latitude = post["latitude"], longitude = post["longitude"];
-			uploadCoord(localID, latitude, longitude);
+			uploadCoord(response, localID, latitude, longitude);
 		}
 
 		/* request=downloadCoord&remoteID=\somevariable\ */
@@ -60,7 +60,8 @@ var uploadFunction = function (response, localID) {
 	for (var i = 0; i < userIDs.length && success; i++) {
 		if (userIDs[i].username == localID) {
 			success = false;
-			response.end("Fail");
+			var result = getJSONResult("Failure");
+			response.end(JSON.stringify(jsonObject));
 		}
 	}
 	if (success) {
@@ -69,7 +70,8 @@ var uploadFunction = function (response, localID) {
 		jsonObject["latitude"] = 0.0;
 		jsonObject["longitude"] = 0.0;
 		userIDs.push(jsonObject);
-		response.end("Success");
+		var result = getJSONResult("Success");
+		response.end(result);
 	}
 };
 
@@ -79,30 +81,47 @@ var downloadFunction = function (response, remoteID) {
 	for (var i = 0; i < userIDs.length && !success; i++) {
 		if (userIDs[i].username == remoteID) {
 			success = true;
-			response.end("Success");
+			var result = getJSONResult("Success");
+			response.end(result);
 		}
 	}
 	if (success == false) {
-		response.end("Fail");
+		var result = getJSONResult("Failure");
+		response.end(result);
 	}
 };
 
 var deleteFunction = function (targetID) {
-	for (var i = 0; i < userIDs.length; i++) {
-		if (userIDs[i].username == targetID)
+	var found = false;
+	for (var i = 0; i < userIDs.length && !found; i++) {
+		if (userIDs[i].username == targetID) {
+			found = true;
 			userIDs.splice(i, 1);
+			var result = getJSONResult("Success");
+			response.end(result);
+		}
+	}
+	if (!found) {
+		var result = getJSONResult("Failure");
+		response.end(result);
 	}
 };
 
-var uploadCoord = function (localID, latitude, longitude) {
+var uploadCoord = function (response, localID, latitude, longitude) {
 	/* Updates coordinates for the given ID */
 	var updated = false;
 	for (var i = 0; i < userIDs.length && !updated; i++) {
 		if (userIDs[i].username == localID) {
 			userIDs[i].latitude = latitude;
 			userIDs[i].longitude = longitude;
+			var result = getJSONResult("Success");
+			response.end(result);
 			updated = true;
 		}
+	}
+	if (!updated) {
+		var result = getJSONResult("Failure");
+		response.end(result);
 	}
 };
 
@@ -118,21 +137,14 @@ var downloadCoord = function (response, remoteID) {
 			found = true;
 		}
 	}
-};
-
-/*
-var downloadCoord = function (response, remoteID) {
-	/* Get the coordinates of the given ID and send it to the client through a JSON string 
-	//for (var i = 0; i < userIDs.length; i++) {
-	var found = False;
-	for (var i = 0; i < userIDs.length && !found; i++) { // It reads like english: "If i is less than the length and I haven't found the ID..."
-		if (userIDs[i].username = remoteID) {
-			var jsonObject = new Object();
-			jsonObject["latitude"] = userIDs[i].latitude;
-			jsonObject["longitude"] = userIDs[i].longitude;
-			response.end(JSON.stringify(jsonObject));
-			found = True;
-		}
+	if (!found) {
+		var result = getJSONResult("Failure");
+		response.end(result);
 	}
 };
-*/
+
+var getJSONResult = function (result) {
+	var jsonObject = new Object();
+	jsonObject["result"] = result;
+	return JSON.stringify(jsonObject);
+};
