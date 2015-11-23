@@ -1,6 +1,9 @@
 package jemboy.navitwo.Main;
 
 public interface OnTaskCompleted {
-    void onUploadIDCompleted(String result);
-    void onDownloadIDCompleted(String result);
+    void onUploadIDCompleted(String response);
+    void onDownloadIDCompleted(String response);
+    void onDeleteIDCompleted(String response);
+    void onUploadCoordinatesCompleted(String response);
+    void onDownloadCoordinatesCompleted(String response);
 }
