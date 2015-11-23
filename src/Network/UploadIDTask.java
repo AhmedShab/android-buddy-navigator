@@ -9,6 +9,7 @@ import java.net.URL;
 import jemboy.navitwo.Main.MainActivity;
 import jemboy.navitwo.Main.OnTaskCompleted;
 import jemboy.navitwo.Utility.Constants;
+import jemboy.navitwo.Utility.ResponseReader;
 
 public class UploadIDTask extends AsyncTask<String, Void, String> {
     private OnTaskCompleted taskCompleted;
@@ -34,14 +35,7 @@ public class UploadIDTask extends AsyncTask<String, Void, String> {
             writer.flush();
             writer.close();
 
-            InputStream inputStream = connection.getInputStream();
-            StringBuffer stringBuffer = new StringBuffer();
-            int character;
-            while ((character = inputStream.read()) != -1) {
-                stringBuffer.append((char)character);
-            }
-            inputStream.close();
-            result = stringBuffer.toString();
+            result = ResponseReader.readResponse(connection);
         } catch (Exception e) {
             result = "Exception";
             e.printStackTrace();

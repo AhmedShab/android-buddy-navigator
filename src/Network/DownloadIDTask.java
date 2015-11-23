@@ -1,12 +1,8 @@
 package jemboy.navitwo.Network;
 
-import android.graphics.Color;
-import android.graphics.PorterDuff;
 import android.os.AsyncTask;
-import android.widget.Button;
 
 import java.io.BufferedWriter;
-import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -14,6 +10,7 @@ import java.net.URL;
 import jemboy.navitwo.Main.MainActivity;
 import jemboy.navitwo.Main.OnTaskCompleted;
 import jemboy.navitwo.Utility.Constants;
+import jemboy.navitwo.Utility.ResponseReader;
 
 public class DownloadIDTask extends AsyncTask<String, Void, String> {
     OnTaskCompleted taskCompleted;
@@ -39,14 +36,7 @@ public class DownloadIDTask extends AsyncTask<String, Void, String> {
             writer.flush();
             writer.close();
 
-            InputStream inputStream = connection.getInputStream();
-            StringBuffer stringBuffer = new StringBuffer();
-            int character;
-            while ((character = inputStream.read()) != -1) {
-                stringBuffer.append((char)character);
-            }
-            inputStream.close();
-            result = stringBuffer.toString();
+            result = ResponseReader.readResponse(connection);
         } catch (Exception e) {
             result = "Exception";
             e.printStackTrace();

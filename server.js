@@ -32,7 +32,7 @@ var server = http.createServer(function (request, response) {
 		/* request=deleteID&targetID=\pastuserinput\ -- deleteID is called when the user already has an ID but he changes it */
 		if (request == "deleteID") {
 			var targetID = post["targetID"];
-			deleteFunction(targetID);
+			deleteFunction(response, targetID);
 		}
 
 		/* request=uploadCoord&localID=\somevariable\&latitude=\somevariable\&longitude=\somevariable\ */
@@ -91,7 +91,7 @@ var downloadFunction = function (response, remoteID) {
 	}
 };
 
-var deleteFunction = function (targetID) {
+var deleteFunction = function (response, targetID) {
 	var found = false;
 	for (var i = 0; i < userIDs.length && !found; i++) {
 		if (userIDs[i].username == targetID) {
