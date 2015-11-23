@@ -7,6 +7,8 @@ import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+import jemboy.navitwo.Utility.ConnectionOperations;
+
 public class DeleteIDTask extends AsyncTask<String, Void, Void> {
     String serverIP;
 
@@ -16,19 +18,11 @@ public class DeleteIDTask extends AsyncTask<String, Void, Void> {
 
     protected Void doInBackground(String... params) {
         try {
-            URL url = new URL(serverIP);
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setConnectTimeout(5000);
-            connection.setReadTimeout(5000);
-            connection.setRequestMethod("POST");
-            connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+            HttpURLConnection connection = ConnectionOperations.startConnection();
 
-            String requestID = "request=deleteID&targetID=" + params[0];
-            connection.setFixedLengthStreamingMode(requestID.getBytes().length);
-            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream()));
-            writer.write(requestID);
-            writer.flush();
-            writer.close();
+            String query = "request=deleteID&targetID=" + params[0];
+
+            ConnectionOperations.writeToServer(connection, query);
         } catch (Exception e) {
             e.printStackTrace();
         }
