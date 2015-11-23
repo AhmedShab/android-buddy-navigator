@@ -9,28 +9,29 @@ import jemboy.navitwo.Utility.ConnectionOperations;
 public class UploadIDTask extends AsyncTask<String, Void, String> {
     private OnTaskCompleted taskCompleted;
 
-    public UploadIDTask(MainActivity mActivity) {
-        this.taskCompleted = mActivity;
+    public UploadIDTask(MainActivity mainActivity) {
+        this.taskCompleted = mainActivity;
     }
 
     protected String doInBackground(String... params) {
-        String result;
+        String response;
         try {
             HttpURLConnection connection = ConnectionOperations.startConnection();
-
             String query = "request=uploadID&localID=" + params[0];
-
             ConnectionOperations.writeToServer(connection, query);
+            response = ConnectionOperations.readResponse(connection);
 
-            result = ConnectionOperations.readResponse(connection);
+
+
+
         } catch (Exception e) {
-            result = "Exception";
+            response = "Exception";
             e.printStackTrace();
         }
-        return result;
+        return response;
     }
 
-    protected void onPostExecute(String result) {
-        taskCompleted.onUploadIDCompleted(result);
+    protected void onPostExecute(String response) {
+        taskCompleted.onUploadIDCompleted(response);
     }
 }

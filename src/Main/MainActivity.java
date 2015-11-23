@@ -89,7 +89,7 @@ public class MainActivity extends Activity implements OnTaskCompleted {
                     if (bundle.getString("action").equals("GPSInfo")) {
                         latitude = bundle.getFloat("latitude");
                         longitude = bundle.getFloat("longitude");
-                        new UploadCoordinatesTask(localID).execute(latitude, longitude);
+                        new UploadCoordinatesTask(MainActivity.this, localID).execute(latitude, longitude);
                     }
                     else if (bundle.getString("action").equals("CompassInfo")) {
                         degree = bundle.getFloat("degree");
@@ -148,6 +148,27 @@ public class MainActivity extends Activity implements OnTaskCompleted {
         }
         downloadID.setEnabled(true);
         isNetworkBusy = false;
+    }
+
+    @Override
+    public void onDeleteIDCompleted(String response) {
+        if (response.equals("Exception")) {
+
+        }
+    }
+
+    @Override
+    public void onUploadCoordinatesCompleted(String response) {
+        if (response.equals("Exception")) {
+
+        }
+    }
+
+    @Override
+    public void onDownloadCoordinatesCompleted(String response) {
+        if (response.equals("Exception")) {
+
+        }
     }
 
     public void clearUploadID(View v) {

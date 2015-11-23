@@ -15,28 +15,28 @@ import jemboy.navitwo.Utility.Constants;
 public class DownloadIDTask extends AsyncTask<String, Void, String> {
     OnTaskCompleted taskCompleted;
 
-    public DownloadIDTask(MainActivity mActivity) {
-        this.taskCompleted = mActivity;
+    public DownloadIDTask(MainActivity mainActivity) {
+        this.taskCompleted = mainActivity;
     }
 
     protected String doInBackground(String... params) {
-        String result;
+        String response;
         try {
             HttpURLConnection connection = ConnectionOperations.startConnection();
-
             String query = "request=downloadID&remoteID=" + params[0];
-
             ConnectionOperations.writeToServer(connection, query);
+            response = ConnectionOperations.readResponse(connection);
 
-            result = ConnectionOperations.readResponse(connection);
+
+
         } catch (Exception e) {
-            result = "Exception";
+            response = "Exception";
             e.printStackTrace();
         }
-        return result;
+        return response;
     }
 
-    protected void onPostExecute(String result) {
-        taskCompleted.onDownloadIDCompleted(result);
+    protected void onPostExecute(String response) {
+        taskCompleted.onDownloadIDCompleted(response);
     }
 }
