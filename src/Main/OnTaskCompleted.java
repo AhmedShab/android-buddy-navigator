@@ -5,5 +5,5 @@ public interface OnTaskCompleted {
     void onDownloadIDCompleted(String response);
     void onDeleteIDCompleted(String response);
     void onUploadCoordinatesCompleted(String response);
-    void onDownloadCoordinatesCompleted(String response);
+    void onDownloadCoordinatesCompleted(String response, String latitude, String longitude);
 }

@@ -131,6 +131,7 @@ var downloadCoord = function (response, remoteID) {
 	for (var i = 0; i < userIDs.length && !found; i++) {
 		if (userIDs[i].username = remoteID) {
 			var jsonObject = new Object();
+			jsonObject["result"] = "Success"
 			jsonObject["latitude"] = userIDs[i].latitude;
 			jsonObject["longitude"] = userIDs[i].longitude;
 			response.end(JSON.stringify(jsonObject));

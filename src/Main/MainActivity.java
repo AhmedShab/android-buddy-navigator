@@ -9,6 +9,7 @@ import android.content.IntentFilter;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -99,6 +100,9 @@ public class MainActivity extends Activity implements OnTaskCompleted {
                 }
             }
         };
+
+
+
         gpsIntent = new Intent(this, GPSTracker.class);
         compassIntent = new Intent(this, CompassTracker.class);
         dummyIntent = new Intent(this, DummyService.class);
@@ -165,7 +169,10 @@ public class MainActivity extends Activity implements OnTaskCompleted {
     }
 
     @Override
-    public void onDownloadCoordinatesCompleted(String response) {
+    public void onDownloadCoordinatesCompleted(String response, String latitude, String longitude) {
+        if (response.equals("Success")) {
+            Log.d("Tag: ", "Remote Coordinates: " + latitude + " " + longitude);
+        }
         if (response.equals("Exception")) {
 
         }
@@ -174,7 +181,7 @@ public class MainActivity extends Activity implements OnTaskCompleted {
     public void clearUploadID(View v) {
         if (uploadButton.isSelected()) {
             uploadButton.setSelected(false);
-            new DeleteIDTask(Constants.SERVER).execute(localID);
+            new DeleteIDTask(MainActivity.this).execute(localID);
         }
         uploadID.setEnabled(true);
         uploadID.setText("");
