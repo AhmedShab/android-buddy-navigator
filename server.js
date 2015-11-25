@@ -9,52 +9,60 @@ var userIDs = 	[
 					{"username" : "Obama", "latitude" : 10.0, "longitude" : 10.0}
 				];
 
-var server = http.createServer(function (request, response) {
-	response.writeHead(200, "Header", {"Content-Type": "application/x-www-form-urlencoded"});
 
-	/* Data is always of the following form: key=value&key2=value2.. values are accessed through post[key] */
-	request.on("data", function (data) {
+var handler = function(request, response) {
+	request.on("data", function(data) {
 		var post = querystring.parse(data.toString());
-		var request = post["request"];
-		
-		/* request=uploadID&localID=\someuserinput\ */
-		if (request == "uploadID") {
-			var localID = post["localID"];
-			uploadFunction(response, localID);
-		}
+		var url = request.url;
+		switch(url) {
+			case "/":
+				response.writeHead(200, {"Content-Type": "application/x-www-form-urlencoded"});
+				console.log("Welcome."); // ???
+				break;
 
-		/* request=downloadID&remoteID=\someuserinput\ */
-		if (request == "downloadID") {
-			var remoteID = post["remoteID"];
-			downloadFunction(response, remoteID);
-		}
+			case "/upload_id":
+				response.writeHead(200, {"Content-Type": "application/x-www-form-urlencoded"});
+				var id = post["id"];
+				upload_id(response, id);
+				break;
 
-		/* request=deleteID&targetID=\pastuserinput\ -- deleteID is called when the user already has an ID but he changes it */
-		if (request == "deleteID") {
-			var targetID = post["targetID"];
-			deleteFunction(response, targetID);
-		}
+			case "/download_id":
+				response.writeHead(200, {"Content-Type": "application/x-www-form-urlencoded"});
+				var id = post["id"];
+				download_id(response, id);
+				break;
 
-		/* request=uploadCoord&localID=\somevariable\&latitude=\somevariable\&longitude=\somevariable\ */
-		if (request == "uploadCoord") {
-			var localID = post["localID"], latitude = post["latitude"], longitude = post["longitude"];
-			uploadCoord(response, localID, latitude, longitude);
-		}
+			case "/delete_id":
+				response.writeHead(200, {"Content-Type": "application/x-www-form-urlencoded"});
+				var id = post["id"];
+				delete_id(response, id);
+				break;
 
-		/* request=downloadCoord&remoteID=\somevariable\ */
-		if (request == "downloadCoord") {
-			var remoteID = post["remoteID"];
-			downloadCoord(response, remoteID);
+			case "/upload_coordinates":
+				response.writeHead(200, {"Content-Type": "application/x-www-form-urlencoded"});
+				var id = post["id"], latitude = post["latitude"], longitude = post["longitude"];
+				upload_coordinates(response, id, latitude, longitude);
+				break;
+
+			case "/download_coordinates":
+				response.writeHead(200, {"Content-Type": "application/x-www-form-urlencoded"});
+				var id = post["id"];
+				download_coordinates(response, id);
+				break;
+
+			default:
+				console.log("Page Not Found."); // ???
+				response.writeHead(404, {"Content-Type": "application/x-www-form-urlencoded"});
 		}
-		console.log(userIDs);
 	});
-});
+};
 
-server.listen(PORT, function () {
+var server = http.createServer(handler);
+server.listen(PORT, function() {
 	console.log("Server listening at: http://localhost:" + PORT);
 });
 
-var uploadFunction = function (response, localID) {
+var upload_id = function(response, id) {
 	/* Check if ID exists.. if it doesn't then push it to userIDs */
 	var success = true;
 	for (var i = 0; i < userIDs.length && success; i++) {
@@ -75,7 +83,7 @@ var uploadFunction = function (response, localID) {
 	}
 };
 
-var downloadFunction = function (response, remoteID) {
+var download_id = function(response, id) {
 	/* Check if ID exists.. if it does then it is a successful remote ID acquisition */
 	var success = false;
 	for (var i = 0; i < userIDs.length && !success; i++) {
@@ -91,7 +99,7 @@ var downloadFunction = function (response, remoteID) {
 	}
 };
 
-var deleteFunction = function (response, targetID) {
+var delete_id = function(response, id) {
 	var found = false;
 	for (var i = 0; i < userIDs.length && !found; i++) {
 		if (userIDs[i].username == targetID) {
@@ -107,7 +115,7 @@ var deleteFunction = function (response, targetID) {
 	}
 };
 
-var uploadCoord = function (response, localID, latitude, longitude) {
+var upload_coordinates = function(response, id, latitude, longitude) {
 	/* Updates coordinates for the given ID */
 	var updated = false;
 	for (var i = 0; i < userIDs.length && !updated; i++) {
@@ -125,7 +133,7 @@ var uploadCoord = function (response, localID, latitude, longitude) {
 	}
 };
 
-var downloadCoord = function (response, remoteID) {
+var download_coordinates = function(response, id) {
 	/* Get the coordinates of the given ID and send it to the client through a JSON string */
 	var found = false;
 	for (var i = 0; i < userIDs.length && !found; i++) {
