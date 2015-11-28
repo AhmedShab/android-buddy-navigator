@@ -20,7 +20,7 @@ public class DummyService extends Service {
     public DummyService() {}
     @Override
     public void onCreate() {
-        Toast.makeText(this, "Service started", Toast.LENGTH_LONG).show();
+        Toast.makeText(this, "Service Started", Toast.LENGTH_LONG).show();
     }
 
     @Override
@@ -40,7 +40,7 @@ public class DummyService extends Service {
 
     @Override
     public void onDestroy() {
-        Toast.makeText(this, "Service destroyed", Toast.LENGTH_LONG).show();
+        Toast.makeText(this, "Service Destroyed", Toast.LENGTH_LONG).show();
         mTimer.cancel();
     }
 

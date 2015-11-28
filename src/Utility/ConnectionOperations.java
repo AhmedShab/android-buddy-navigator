@@ -1,7 +1,6 @@
 package jemboy.navitwo.Utility;
 
 import org.json.JSONObject;
-
 import java.io.BufferedWriter;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
@@ -9,10 +8,10 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 public class ConnectionOperations {
-    public static HttpURLConnection startConnection() {
+    public static HttpURLConnection startConnection(String requestURL) {
         HttpURLConnection connection;
         try {
-            URL url = new URL(Constants.SERVER);
+            URL url = new URL(requestURL);
             connection = (HttpURLConnection) url.openConnection();
             connection.setConnectTimeout(3000);
             connection.setReadTimeout(3000);
@@ -24,7 +23,7 @@ public class ConnectionOperations {
         return connection;
     }
 
-    public static void writeToServer(HttpURLConnection connection, String query) {
+    public static void sendRequest(HttpURLConnection connection, String query) {
         try {
             connection.setFixedLengthStreamingMode(query.getBytes().length);
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream()));
@@ -36,21 +35,52 @@ public class ConnectionOperations {
         }
     }
 
-    public static String readResponse(HttpURLConnection connection) {
+    public static String readSingleResponse(HttpURLConnection connection) {
         String response;
         try {
             InputStream inputStream = connection.getInputStream();
-            StringBuffer stringBuffer = new StringBuffer();
+            StringBuilder stringBuilder = new StringBuilder();
             int character;
             while ((character = inputStream.read()) != -1) {
-                stringBuffer.append((char) character);
+                stringBuilder.append((char) character);
             }
             inputStream.close();
-            response = stringBuffer.toString();
-            JSONObject jsonObject = new JSONObject(response);
+
+            String jsonString = stringBuilder.toString();
+            JSONObject jsonObject = new JSONObject(jsonString);
+
             response = jsonObject.getString("result");
+
         } catch (Exception e) {
-            response = "Exception";
+            response = Constants.EXCEPTION;
+            e.printStackTrace();
+        }
+        return response;
+    }
+
+    public static String[] readMultipleResponse(HttpURLConnection connection) {
+        String response[] = {null, null, null};
+        try {
+            InputStream inputStream = connection.getInputStream();
+            StringBuilder stringBuilder = new StringBuilder();
+            int character;
+            while ((character = inputStream.read()) != -1) {
+                stringBuilder.append((char) character);
+            }
+            inputStream.close();
+
+            String jsonString = stringBuilder.toString();
+            JSONObject jsonObject = new JSONObject(jsonString);
+
+            response[0] = jsonObject.getString("result");
+
+            if (jsonObject.has("latitude")) {
+                response[1] = jsonObject.getString("latitude");
+                response[2] = jsonObject.getString("longitude");
+            }
+
+        } catch (Exception e) {
+            response[0] = Constants.EXCEPTION;
             e.printStackTrace();
         }
         return response;

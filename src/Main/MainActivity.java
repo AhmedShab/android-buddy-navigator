@@ -13,6 +13,8 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
+import jemboy.navitwo.Network.DownloadCoordinatesTask;
 import jemboy.navitwo.Service.CompassTracker;
 import jemboy.navitwo.Service.DummyService;
 import jemboy.navitwo.Service.GPSTracker;
@@ -24,6 +26,7 @@ import jemboy.navitwo.R;
 import jemboy.navitwo.Utility.Constants;
 
 public class MainActivity extends Activity implements OnTaskCompleted {
+    private TextView statusView;
     private Button uploadButton, downloadButton;
     private EditText uploadID;
     private EditText downloadID;
@@ -36,6 +39,8 @@ public class MainActivity extends Activity implements OnTaskCompleted {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        statusView = (TextView)findViewById(R.id.textView);
 
         uploadButton = (Button)findViewById(R.id.upload_button);
         uploadButton.getBackground().setColorFilter(Color.YELLOW, PorterDuff.Mode.MULTIPLY);
@@ -50,12 +55,12 @@ public class MainActivity extends Activity implements OnTaskCompleted {
         uploadButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (isNetworkBusy == false) {
+                if (!isNetworkBusy) {
                     localID = uploadID.getText().toString();
-                    if (localID.equals(pastLocalID) == false && localID.equals("") == false) {
+                    if (!localID.equals(pastLocalID)) { // Error Check for Whitespace
                         isNetworkBusy = true;
                         uploadID.setEnabled(false);
-                        new UploadIDTask(MainActivity.this)
+                        new UploadIDTask(MainActivity.this, Constants.UPLOAD_ID)
                                 .execute(localID);
                     }
                 }
@@ -65,14 +70,12 @@ public class MainActivity extends Activity implements OnTaskCompleted {
         downloadButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (isNetworkBusy == false) {
-                    pastRemoteID = remoteID;
+                if (!isNetworkBusy) {
                     remoteID = downloadID.getText().toString();
-                    if (remoteID.equals(pastLocalID) == false && remoteID.equals("") == false
-                            && remoteID.equals(pastRemoteID) == false) {
+                    if (!remoteID.equals(pastRemoteID) && !remoteID.equals(localID)) { // Error Check for Whitespace
                         isNetworkBusy = true;
                         downloadID.setEnabled(false);
-                        new DownloadIDTask(MainActivity.this)
+                        new DownloadIDTask(MainActivity.this, Constants.DOWNLOAD_ID)
                                 .execute(remoteID);
                     }
                 }
@@ -90,7 +93,8 @@ public class MainActivity extends Activity implements OnTaskCompleted {
                     if (bundle.getString("action").equals("GPSInfo")) {
                         latitude = bundle.getFloat("latitude");
                         longitude = bundle.getFloat("longitude");
-                        new UploadCoordinatesTask(MainActivity.this, localID).execute(latitude, longitude);
+                        new UploadCoordinatesTask(MainActivity.this, Constants.UPLOAD_COORDINATES)
+                                .execute(localID, Float.toString(latitude), Float.toString(longitude));
                     }
                     else if (bundle.getString("action").equals("CompassInfo")) {
                         degree = bundle.getFloat("degree");
@@ -101,8 +105,6 @@ public class MainActivity extends Activity implements OnTaskCompleted {
             }
         };
 
-
-
         gpsIntent = new Intent(this, GPSTracker.class);
         compassIntent = new Intent(this, CompassTracker.class);
         dummyIntent = new Intent(this, DummyService.class);
@@ -110,22 +112,22 @@ public class MainActivity extends Activity implements OnTaskCompleted {
 
     @Override
     public void onUploadIDCompleted(String result) {
-        if (result.equals("Success")) {
+        if (result.equals(Constants.SUCCESS)) {
             pastLocalID = localID;
             uploadButton.setSelected(true);
             uploadButton.getBackground().setColorFilter(Color.GREEN, PorterDuff.Mode.MULTIPLY);
             startServices();
         }
 
-        else if (result.equals("Fail")) {
-            pastLocalID = "";
+        else if (result.equals(Constants.FAILURE)) {
+            localID = pastLocalID = "";
             uploadID.setEnabled(true);
             uploadID.setError("Username already taken.", null);
             uploadButton.getBackground().setColorFilter(Color.RED, PorterDuff.Mode.MULTIPLY);
         }
 
-        else if (result.equals("Exception")) {
-            pastLocalID = "";
+        else if (result.equals(Constants.EXCEPTION)) {
+            localID = pastLocalID = "";
             uploadID.setEnabled(true);
             uploadID.setError("Oops, something went wrong. Please try again.", null);
             uploadButton.getBackground().setColorFilter(Color.RED, PorterDuff.Mode.MULTIPLY);
@@ -135,53 +137,74 @@ public class MainActivity extends Activity implements OnTaskCompleted {
 
     @Override
     public void onDownloadIDCompleted(String result) {
-        if (result.equals("Success")) {
+        if (result.equals(Constants.SUCCESS)) {
+            pastRemoteID = remoteID;
             downloadButton.getBackground().setColorFilter(Color.GREEN, PorterDuff.Mode.MULTIPLY);
+            new DownloadCoordinatesTask(MainActivity.this, Constants.DOWNLOAD_COORDINATES).execute(remoteID);
         }
 
-        if (result.equals("Fail")) {
-            remoteID = "";
-            downloadID.setError("There is no such username.", null);
+        else if (result.equals(Constants.FAILURE)) {
+            remoteID = pastRemoteID = "";
+            downloadID.setEnabled(true);
+            downloadID.setError("Username cannot be found.", null);
             downloadButton.getBackground().setColorFilter(Color.RED, PorterDuff.Mode.MULTIPLY);
         }
 
-        if (result.equals("Exception")) {
-            remoteID = "";
+        else if (result.equals(Constants.EXCEPTION)) {
+            remoteID = pastRemoteID = "";
+            downloadID.setEnabled(true);
             downloadID.setError("Oops, something went wrong. Please try again.", null);
             downloadButton.getBackground().setColorFilter(Color.RED, PorterDuff.Mode.MULTIPLY);
         }
-        downloadID.setEnabled(true);
         isNetworkBusy = false;
     }
 
     @Override
     public void onDeleteIDCompleted(String response) {
-        if (response.equals("Exception")) {
+        if (response.equals(Constants.SUCCESS)) {
+            // Do nothing
+        }
 
+        else if (response.equals(Constants.FAILURE)) {
+            // Do nothing
+        }
+
+        else if (response.equals(Constants.EXCEPTION)) {
+            // Do nothing
         }
     }
 
     @Override
     public void onUploadCoordinatesCompleted(String response) {
-        if (response.equals("Exception")) {
-
+        if (response.equals(Constants.SUCCESS)) {
+            // Do nothing
+        }
+        if (response.equals(Constants.FAILURE)) {
+            // Do nothing
+        }
+        if (response.equals(Constants.EXCEPTION)) {
+            // Do nothing
         }
     }
 
     @Override
     public void onDownloadCoordinatesCompleted(String response, String latitude, String longitude) {
-        if (response.equals("Success")) {
+        if (response.equals(Constants.SUCCESS)) {
             Log.d("Tag: ", "Remote Coordinates: " + latitude + " " + longitude);
         }
-        if (response.equals("Exception")) {
+        else if (response.equals(Constants.FAILURE)) {
+            // Target Client has disconnected!!!
+        }
 
+        else if (response.equals(Constants.EXCEPTION)) {
+            // Do nothing
         }
     }
 
     public void clearUploadID(View v) {
         if (uploadButton.isSelected()) {
             uploadButton.setSelected(false);
-            new DeleteIDTask(MainActivity.this).execute(localID);
+            new DeleteIDTask(MainActivity.this, Constants.DELETE_ID).execute(localID);
         }
         uploadID.setEnabled(true);
         uploadID.setText("");

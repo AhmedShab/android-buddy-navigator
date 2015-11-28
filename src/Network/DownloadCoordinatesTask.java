@@ -1,58 +1,39 @@
 package jemboy.navitwo.Network;
 
 import android.os.AsyncTask;
-
-import org.json.JSONObject;
-
-import java.io.InputStream;
 import java.net.HttpURLConnection;
-
 import jemboy.navitwo.Main.MainActivity;
 import jemboy.navitwo.Main.OnTaskCompleted;
 import jemboy.navitwo.Utility.ConnectionOperations;
+import jemboy.navitwo.Utility.Constants;
 
-public class DownloadCoordinatesTask extends AsyncTask<String, Void, String> {
-    OnTaskCompleted taskCompleted;
+public class DownloadCoordinatesTask extends AsyncTask<String, Void, String[]> {
+    private OnTaskCompleted taskCompleted;
+    private String requestURL;
 
-    public DownloadCoordinatesTask(MainActivity mainActivity) {
+    public DownloadCoordinatesTask(MainActivity mainActivity, String requestURL) {
         this.taskCompleted = mainActivity;
+        this.requestURL = requestURL;
     }
 
-    protected String doInBackground(String... params) {
-        String response;
+    protected String[] doInBackground(String... params) {
+        String responseArr[] = {null, null, null};
         try {
-            HttpURLConnection connection = ConnectionOperations.startConnection();
-            String query = "request=checkRemote&remoteID=" + params[0];
-            ConnectionOperations.writeToServer(connection, query);
+            HttpURLConnection connection = ConnectionOperations.startConnection(requestURL);
+            String query = "username=" + params[0];
+            ConnectionOperations.sendRequest(connection, query);
+            responseArr = ConnectionOperations.readMultipleResponse(connection);
 
-            InputStream inputStream = connection.getInputStream();
-            StringBuffer stringBuffer = new StringBuffer();
-            int character;
-            while ((character = inputStream.read()) != -1) {
-                stringBuffer.append((char) character);
-            }
-            inputStream.close();
-            response = stringBuffer.toString();
-            JSONObject jsonObject = new JSONObject(response);
-            response = jsonObject.getString("result");
-            if (jsonObject.getString("result").equals("Success")) {
-                response = "Success " + jsonObject.getString("latitude") + jsonObject.getString("longitude");
-            }
         } catch (Exception e) {
-            response = "Exception";
+            responseArr[0] = Constants.EXCEPTION;
             e.printStackTrace();
         }
-        return response;
+        return responseArr;
 
     }
 
-    protected void onPostExecute(String response) {
-        String latitude = "", longitude = "";
-        if (response.equals("Success")) {
-            String[] temp = response.split(" ");
-            latitude = temp[1];
-            longitude = temp[2];
-        }
+    protected void onPostExecute(String[] responseArr) {
+        String response = responseArr[0], latitude = responseArr[1], longitude = responseArr[2];
         taskCompleted.onDownloadCoordinatesCompleted(response, latitude, longitude);
     }
 }
