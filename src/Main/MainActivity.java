@@ -26,7 +26,6 @@ import jemboy.navitwo.R;
 import jemboy.navitwo.Utility.Constants;
 
 public class MainActivity extends Activity implements OnTaskCompleted {
-    private TextView statusView;
     private Button uploadButton, downloadButton;
     private EditText uploadID;
     private EditText downloadID;
@@ -39,8 +38,6 @@ public class MainActivity extends Activity implements OnTaskCompleted {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        statusView = (TextView)findViewById(R.id.textView);
 
         uploadButton = (Button)findViewById(R.id.upload_button);
         uploadButton.getBackground().setColorFilter(Color.YELLOW, PorterDuff.Mode.MULTIPLY);
@@ -57,7 +54,8 @@ public class MainActivity extends Activity implements OnTaskCompleted {
             public void onClick(View v) {
                 if (!isNetworkBusy) {
                     localID = uploadID.getText().toString();
-                    if (!localID.equals(pastLocalID)) { // Error Check for Whitespace
+                    if (!localID.equals(pastLocalID) && !hasWhiteSpace(uploadID)
+                            && !identicalID(uploadID, downloadID)) {
                         isNetworkBusy = true;
                         uploadID.setEnabled(false);
                         new UploadIDTask(MainActivity.this, Constants.UPLOAD_ID)
@@ -72,7 +70,8 @@ public class MainActivity extends Activity implements OnTaskCompleted {
             public void onClick(View v) {
                 if (!isNetworkBusy) {
                     remoteID = downloadID.getText().toString();
-                    if (!remoteID.equals(pastRemoteID) && !remoteID.equals(localID)) { // Error Check for Whitespace
+                    if (!remoteID.equals(pastRemoteID) && !hasWhiteSpace(downloadID)
+                            && !identicalID(downloadID, uploadID)) {
                         isNetworkBusy = true;
                         downloadID.setEnabled(false);
                         new DownloadIDTask(MainActivity.this, Constants.DOWNLOAD_ID)
@@ -237,6 +236,24 @@ public class MainActivity extends Activity implements OnTaskCompleted {
             stopService(compassIntent);
             */
             stopService(dummyIntent);
+            return true;
+        }
+        return false;
+    }
+
+    private boolean hasWhiteSpace(EditText editText) {
+        String username = editText.getText().toString();
+        if (username.contains(" ")) {
+            editText.setError("Space is not allowed.", null);
+            return true;
+        }
+        return false;
+    }
+
+    private boolean identicalID(EditText editText1, EditText editText2) {
+        String username1 = editText1.getText().toString(), username2 = editText2.getText().toString();
+        if (username1.equals(username2)) {
+            editText1.setError("You have entered identical IDs.", null);
             return true;
         }
         return false;
