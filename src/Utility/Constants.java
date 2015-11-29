@@ -11,4 +11,8 @@ public class Constants {
     public static String FAILURE                = "NO";
     public static String EXCEPTION              = "EXCEPTION";
     public static String RECEIVER               = "jemboy.navitwo.location";
+    public static String REQUEST                = "REQUEST";
+    public static String LCOORDINATES           = "LCOORDINATES";
+    public static String ROTATION               = "ROTATION";
+    public static String RCOORDINATES           = "RCOORDINATES";
 }

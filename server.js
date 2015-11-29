@@ -96,6 +96,7 @@ var handler = function(request, response) {
 						userIDs[i].longitude = longitude;
 						var jsonString = getSuccessOrFailure(SUCCESS);
 						response.end(jsonString);
+						console.log(username + ": " + latitude + ", " + longitude);
 					}
 				}
 				if (!updated) {

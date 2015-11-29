@@ -9,35 +9,44 @@ import android.content.IntentFilter;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.TextView;
+import android.widget.ImageView;
+
+import java.util.Timer;
+import java.util.TimerTask;
 import jemboy.navitwo.Network.DownloadCoordinatesTask;
-import jemboy.navitwo.Service.CompassTracker;
 import jemboy.navitwo.Service.DummyService;
-import jemboy.navitwo.Service.GPSTracker;
 import jemboy.navitwo.Network.DeleteIDTask;
 import jemboy.navitwo.Network.DownloadIDTask;
 import jemboy.navitwo.Network.UploadCoordinatesTask;
 import jemboy.navitwo.Network.UploadIDTask;
 import jemboy.navitwo.R;
+import jemboy.navitwo.Service.LocationService;
+import jemboy.navitwo.Service.RotationService;
+import jemboy.navitwo.Utility.ArrowAnimation;
 import jemboy.navitwo.Utility.Constants;
 
 public class MainActivity extends Activity implements OnTaskCompleted {
     private Button uploadButton, downloadButton;
-    private EditText uploadID;
-    private EditText downloadID;
-    private Intent gpsIntent, compassIntent, dummyIntent;
+    private EditText uploadID, downloadID;
+    private Intent locationIntent, rotationIntent, dummyIntent;
     private BroadcastReceiver broadcastReceiver;
     private String localID = "", remoteID = "", pastLocalID = "", pastRemoteID = "";
-    private boolean isNetworkBusy = false, wereServicesRunning = false;
+    private boolean isNetworkBusy = false, isUploading = false, isDownloading = false;
+    private Handler handler = new Handler();
+    private Timer timer = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        ImageView imageView = (ImageView)findViewById(R.id.imageView);
+        final ArrowAnimation arrowAnimation = new ArrowAnimation(imageView);
 
         uploadButton = (Button)findViewById(R.id.upload_button);
         uploadButton.getBackground().setColorFilter(Color.YELLOW, PorterDuff.Mode.MULTIPLY);
@@ -82,30 +91,40 @@ public class MainActivity extends Activity implements OnTaskCompleted {
         });
 
         broadcastReceiver = new BroadcastReceiver() {
-            private float latitude = 0, longitude = 0, degree = 0;
+            private float xlat = 0, xlong = 0, ylat = 0, ylong = 0, degree = 0;
             private boolean isLocked = false;
             @Override
             public void onReceive(Context context, Intent intent) {
                 if (!isLocked) {
                     isLocked = true;
                     Bundle bundle = intent.getExtras();
-                    if (bundle.getString("action").equals("GPSInfo")) {
-                        latitude = bundle.getFloat("latitude");
-                        longitude = bundle.getFloat("longitude");
+                    String request = bundle.getString(Constants.REQUEST);
+                    if (request.equals(Constants.LCOORDINATES)) {
+                        xlat = bundle.getFloat("latitude");
+                        xlong = bundle.getFloat("longitude");
                         new UploadCoordinatesTask(MainActivity.this, Constants.UPLOAD_COORDINATES)
-                                .execute(localID, Float.toString(latitude), Float.toString(longitude));
+                                .execute(localID, Float.toString(xlat), Float.toString(xlong));
+                        arrowAnimation.updateAzimuth(xlat, xlong, ylat, ylong);
                     }
-                    else if (bundle.getString("action").equals("CompassInfo")) {
+                    else if (request.equals(Constants.RCOORDINATES)) {
+                        ylat = bundle.getFloat("latitude");
+                        ylong = bundle.getFloat("longitude");
+                        arrowAnimation.updateAzimuth(xlat, xlong, ylat, ylong);
+                        arrowAnimation.rotateImageView();
+                    }
+                    else if (request.equals(Constants.ROTATION)) {
                         degree = bundle.getFloat("degree");
+                        arrowAnimation.updateDegree(degree);
+                        arrowAnimation.rotateImageView();
                     }
-                    // Rotate shite
                     isLocked = false;
                 }
             }
         };
-
-        gpsIntent = new Intent(this, GPSTracker.class);
-        compassIntent = new Intent(this, CompassTracker.class);
+        /*
+        locationIntent = new Intent(this, LocationService.class);
+        rotationIntent = new Intent(this, RotationService.class);
+        */
         dummyIntent = new Intent(this, DummyService.class);
     }
 
@@ -115,7 +134,11 @@ public class MainActivity extends Activity implements OnTaskCompleted {
             pastLocalID = localID;
             uploadButton.setSelected(true);
             uploadButton.getBackground().setColorFilter(Color.GREEN, PorterDuff.Mode.MULTIPLY);
-            startServices();
+            /*
+            startService(locationIntent);
+            startService(rotationIntent);
+            */
+            startService(dummyIntent);
         }
 
         else if (result.equals(Constants.FAILURE)) {
@@ -139,7 +162,8 @@ public class MainActivity extends Activity implements OnTaskCompleted {
         if (result.equals(Constants.SUCCESS)) {
             pastRemoteID = remoteID;
             downloadButton.getBackground().setColorFilter(Color.GREEN, PorterDuff.Mode.MULTIPLY);
-            new DownloadCoordinatesTask(MainActivity.this, Constants.DOWNLOAD_COORDINATES).execute(remoteID);
+            timer = new Timer();
+            timer.schedule(new DownloadSchedule(), 0, 4 * 1000);
         }
 
         else if (result.equals(Constants.FAILURE)) {
@@ -189,10 +213,19 @@ public class MainActivity extends Activity implements OnTaskCompleted {
     @Override
     public void onDownloadCoordinatesCompleted(String response, String latitude, String longitude) {
         if (response.equals(Constants.SUCCESS)) {
-            Log.d("Tag: ", "Remote Coordinates: " + latitude + " " + longitude);
+            Intent intent = new Intent();
+            intent.setAction(Constants.RECEIVER);
+            intent.putExtra(Constants.REQUEST, Constants.RCOORDINATES);
+            intent.putExtra("latitude", Float.parseFloat(latitude));
+            intent.putExtra("longitude", Float.parseFloat(longitude));
+            sendBroadcast(intent);
         }
         else if (response.equals(Constants.FAILURE)) {
-            // Target Client has disconnected!!!
+            cancelAndNullify();
+            remoteID = pastRemoteID = "";
+            downloadID.setEnabled(true);
+            downloadID.setError("Client has disconnected.", null);
+            downloadButton.getBackground().setColorFilter(Color.RED, PorterDuff.Mode.MULTIPLY);
         }
 
         else if (response.equals(Constants.EXCEPTION)) {
@@ -201,6 +234,13 @@ public class MainActivity extends Activity implements OnTaskCompleted {
     }
 
     public void clearUploadID(View v) {
+        if (isMyServiceRunning(DummyService.class)) {
+            /*
+            stopService(locationIntent);
+            stopService(rotationIntent);
+            */
+            stopService(dummyIntent);
+        }
         if (uploadButton.isSelected()) {
             uploadButton.setSelected(false);
             new DeleteIDTask(MainActivity.this, Constants.DELETE_ID).execute(localID);
@@ -209,36 +249,14 @@ public class MainActivity extends Activity implements OnTaskCompleted {
         uploadID.setText("");
         localID = pastLocalID = "";
         uploadButton.getBackground().setColorFilter(Color.YELLOW, PorterDuff.Mode.MULTIPLY);
-        wereServicesRunning = stopServices();
     }
 
     public void clearDownloadID(View v) {
+        cancelAndNullify();
         downloadID.setEnabled(true);
         downloadID.setText("");
         remoteID = pastRemoteID = "";
         downloadButton.getBackground().setColorFilter(Color.YELLOW, PorterDuff.Mode.MULTIPLY);
-    }
-
-    public void startServices() {
-        registerReceiver(broadcastReceiver, new IntentFilter(Constants.RECEIVER));
-        /*
-        startService(gpsIntent);
-        startService(compassIntent);
-        */
-        startService(dummyIntent);
-    }
-
-    public boolean stopServices() {
-        if (isMyServiceRunning(DummyService.class)) {
-            unregisterReceiver(broadcastReceiver);
-            /*
-            stopService(gpsIntent);
-            stopService(compassIntent);
-            */
-            stopService(dummyIntent);
-            return true;
-        }
-        return false;
     }
 
     private boolean hasWhiteSpace(EditText editText) {
@@ -269,16 +287,56 @@ public class MainActivity extends Activity implements OnTaskCompleted {
         return false;
     }
 
+    private void cancelAndNullify() {
+        timer.cancel();
+        timer = null;
+    }
+
+    class DownloadSchedule extends TimerTask {
+        @Override
+        public void run() {
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    new DownloadCoordinatesTask(MainActivity.this, Constants.DOWNLOAD_COORDINATES).execute(remoteID);
+                }
+            });
+        }
+    }
+
     @Override
     public void onResume() {
         super.onResume();
-        if (wereServicesRunning)
-            startServices();
+        registerReceiver(broadcastReceiver, new IntentFilter(Constants.RECEIVER));
+        if (isUploading) {
+            isUploading = false;
+            /*
+            startService(locationIntent);
+            startService(rotationIntent);
+            */
+            startService(dummyIntent);
+        }
+
+        if (isDownloading) {
+            timer = new Timer();
+            timer.schedule(new DownloadSchedule(), 0, 4 * 1000);
+        }
     }
 
     @Override
     public void onStop() {
         super.onStop();
-        wereServicesRunning = stopServices();
+        if (isMyServiceRunning(DummyService.class)) {
+            isUploading = true;
+            /*
+            stopService(locationIntent);
+            stopService(rotationIntent);
+            */
+            stopService(dummyIntent);
+        }
+        if (timer != null) {
+            isDownloading = true;
+            cancelAndNullify();
+        }
     }
 }

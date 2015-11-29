@@ -52,7 +52,7 @@ public class DummyService extends Service {
                 public void run() {
                     Intent intent = new Intent();
                     intent.setAction(Constants.RECEIVER);
-                    intent.putExtra("action", "GPSInfo");
+                    intent.putExtra(Constants.REQUEST, Constants.LCOORDINATES);
 
                     Random random = new Random();
                     intent.putExtra("latitude", (float) random.nextInt(100));

@@ -1,6 +1,9 @@
 package jemboy.navitwo.Network;
 
+import android.content.Intent;
 import android.os.AsyncTask;
+import android.util.Log;
+
 import java.net.HttpURLConnection;
 import jemboy.navitwo.Main.MainActivity;
 import jemboy.navitwo.Main.OnTaskCompleted;
@@ -14,6 +17,7 @@ public class DownloadCoordinatesTask extends AsyncTask<String, Void, String[]> {
     public DownloadCoordinatesTask(MainActivity mainActivity, String requestURL) {
         this.taskCompleted = mainActivity;
         this.requestURL = requestURL;
+
     }
 
     protected String[] doInBackground(String... params) {
