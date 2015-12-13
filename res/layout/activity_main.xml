@@ -20,7 +20,7 @@
             android:layout_width="170dp"
             android:layout_height="wrap_content"
             android:id="@+id/local_identification"
-            android:hint="Local ID"
+            android:hint="@string/edit_local"
             android:maxLength="8"
             android:maxLines="1"
             android:singleLine="true"/>
@@ -30,7 +30,8 @@
             android:layout_width="20dp"
             android:layout_height="20dp"
             android:layout_marginRight="10dp"
-            android:layout_gravity="right|center_vertical"
+            android:layout_marginEnd="10dp"
+            android:layout_gravity="end|center_vertical"
             android:background="@drawable/clear"/>
 
     </FrameLayout>
@@ -47,7 +48,7 @@
             android:layout_width="170dp"
             android:layout_height="wrap_content"
             android:id="@+id/remote_identification"
-            android:hint="Remote ID"
+            android:hint="@string/edit_remote"
             android:maxLength="10"
             android:maxLines="1"
             android:singleLine="true" />
@@ -57,7 +58,8 @@
             android:layout_width="20dp"
             android:layout_height="20dp"
             android:layout_marginRight="10dp"
-            android:layout_gravity="right|center_vertical"
+            android:layout_marginEnd="10dp"
+            android:layout_gravity="end|center_vertical"
             android:background="@drawable/clear"/>
 
     </FrameLayout>
@@ -65,7 +67,7 @@
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Upload"
+        android:text="@string/button_upload"
         android:id="@+id/upload_button"
         android:layout_alignRight="@+id/left_frame"
         android:layout_alignEnd="@+id/left_frame"
@@ -76,7 +78,7 @@
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Download"
+        android:text="@string/button_download"
         android:id="@+id/download_button"
         android:layout_alignLeft="@+id/right_frame"
         android:layout_alignStart="@+id/right_frame"
