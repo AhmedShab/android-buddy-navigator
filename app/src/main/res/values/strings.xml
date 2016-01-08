@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Buddy Navigator</string>
+    <string name="edit_local">Local ID</string>
+    <string name="edit_remote">Remote ID</string>
+    <string name="button_upload">Upload</string>
+    <string name="button_download">Download</string>
+    <string name="action_settings">Settings</string>
+
+</resources>
